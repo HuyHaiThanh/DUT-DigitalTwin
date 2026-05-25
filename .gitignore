@@ -48,9 +48,29 @@ crashlytics-build.properties
 # Asset Store tools
 /AssetStoreTools*
 
-# Unity AI Assistant — large relay binaries (>100MB, exceed GitHub limit)
-Packages/com.unity.ai.assistant/RelayApp~/
-Packages/*/RelayApp~/
+# Unity AI Assistant — embedded package (large, re-installable)
+Packages/com.unity.ai.assistant/
+Packages/com.unity.ai.assistant.meta
+
+# Unity built-in packages / samples (re-importable via Package Manager)
+Assets/TextMesh Pro/
+Assets/TextMesh Pro.meta
+Assets/AI Toolkit/
+Assets/AI Toolkit.meta
+Assets/TutorialInfo/
+Assets/TutorialInfo.meta
+Assets/UI Toolkit/
+Assets/UI Toolkit.meta
+Assets/Readme.asset
+Assets/Readme.asset.meta
+
+# Debug / report / temp files
+Assets/DUT_*.txt
+Assets/DUT_*.txt.meta
+Assets/_Recovery/
+Assets/_Recovery.meta
+Assets/Screenshots/
+Assets/Screenshots.meta
 
 # Python scraper output (optional — xoá dòng này nếu muốn track)
 # Assets/StreamingAssets/schedule_data.json
