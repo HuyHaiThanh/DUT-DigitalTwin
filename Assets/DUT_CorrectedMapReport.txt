@@ -1,0 +1,13 @@
+=== DUT CORRECTED MAP REPORT ===
+Orientation: X+ East, Z+ North
+Total Rooms: 413
+Total Special Buildings: 48
+
+--- Major Locations (Audit) ---
+Misc_ThuVien: (-520.68, 2.23, -419.59)
+Misc_NhaThiDau: (-143.71, 2.45, -328.22)
+Building_B: (-436.29, 2.78, -250.62)
+Building_A: (-219.95, 12.90, -410.64)
+Building_F: (-398.85, 0.00, -501.12)
+Building_D: (-505.03, 17.56, -69.03)
+Building_C: (-411.27, 1.78, -693.84)

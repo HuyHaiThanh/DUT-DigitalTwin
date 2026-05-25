@@ -1,0 +1,56 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emory[Cc]aptures/
+[Uu]ser[Ss]ettings/
+
+# Unity cache / local settings
+*.pidb
+*.booproj
+*.svd
+*.userprefs
+*.unityproj
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.swp
+.externalCodeEditor
+ExportedObj/
+.consulo/
+*.csproj
+*.unitypackage.meta
+
+# Visual Studio / Rider
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Crash reports
+sysinfo.txt
+crashlytics-build.properties
+
+# Asset Store tools
+/AssetStoreTools*
+
+# Unity AI Assistant — large relay binaries (>100MB, exceed GitHub limit)
+Packages/com.unity.ai.assistant/RelayApp~/
+Packages/*/RelayApp~/
+
+# Python scraper output (optional — xoá dòng này nếu muốn track)
+# Assets/StreamingAssets/schedule_data.json

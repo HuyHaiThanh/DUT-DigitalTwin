@@ -1,0 +1,34 @@
+{
+  "buildings": [
+    {
+      "id": "ToaNha_01",
+      "name": "KHU NHÀ A1",
+      "schedule": "Giải tích 1 - P.102 - GV: Nguyễn Văn A",
+      "device_stats": {
+        "cams": 12,
+        "sensors": 8,
+        "status": "Hoạt động"
+      }
+    },
+    {
+      "id": "ToaNha_02",
+      "name": "KHU NHÀ B1",
+      "schedule": "Vật lý đại cương - P.201 - GV: Trần Thị B",
+      "device_stats": {
+        "cams": 8,
+        "sensors": 5,
+        "status": "Hoạt động"
+      }
+    },
+    {
+      "id": "ToaNha_03",
+      "name": "THƯ VIỆN",
+      "schedule": "Tự học - Toàn bộ tầng",
+      "device_stats": {
+        "cams": 24,
+        "sensors": 15,
+        "status": "Hoạt động"
+      }
+    }
+  ]
+}

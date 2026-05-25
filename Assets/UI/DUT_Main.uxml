@@ -1,0 +1,141 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:Style src="DUT_Main.uss" />
+  <ui:VisualElement name="root" class="root">
+
+    <!-- TOPBAR -->
+    <ui:VisualElement name="topbar" class="topbar">
+      <ui:Label name="logo" class="topbar__logo" text="DUT Digital Twin" />
+      <ui:VisualElement name="nav" class="topbar__nav">
+        <ui:Button name="nav-3d"        class="nav-btn nav-btn--active" text="Campus 3D" />
+        <ui:Button name="nav-dashboard" class="nav-btn"                 text="Dashboard" />
+        <ui:Button name="nav-schedule"  class="nav-btn"                 text="Lịch học" />
+      </ui:VisualElement>
+      <!-- Live KPI chips (updated by UIManager) -->
+      <ui:VisualElement name="topbar-kpi" class="topbar__kpi">
+        <ui:Label name="kpi-occupied" class="kpi-chip kpi-chip--green" text="— có lớp" />
+        <ui:Label name="kpi-alerts"   class="kpi-chip kpi-chip--ok"   text="✅ OK" />
+      </ui:VisualElement>
+      <ui:VisualElement name="topbar-right" class="topbar__right">
+        <ui:VisualElement class="alert-bell-wrap">
+          <ui:Button name="alert-bell" class="alert-bell" text="🔔" />
+          <ui:Label name="alert-badge" class="alert-badge" text="0" />
+        </ui:VisualElement>
+        <ui:VisualElement name="live-dot" class="live-dot" />
+        <ui:Label class="live-label"    text="LIVE" />
+        <ui:Label name="datetime-label" class="datetime-label" text="—" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- LAYER BAR -->
+    <ui:VisualElement name="layer-toggles" class="layer-bar">
+      <ui:Label class="layer-bar__label" text="LỚP DỮ LIỆU" />
+      <ui:Button name="layer-schedule"  class="layer-btn layer-btn--active" text="📚 Lịch học" />
+      <ui:Button name="layer-occupancy" class="layer-btn"                   text="👥 Mật độ" />
+      <ui:Button name="layer-infra"     class="layer-btn"                   text="⚡ Hạ tầng" />
+      <ui:Button name="layer-equipment" class="layer-btn"                   text="🖥 Thiết bị" />
+      <ui:Button name="layer-events"    class="layer-btn"                   text="📅 Sự kiện" />
+      <ui:Button name="layer-maint"     class="layer-btn"                   text="🔧 Bảo trì" />
+    </ui:VisualElement>
+
+    <!-- MAIN CONTENT -->
+    <ui:VisualElement name="main-content" class="main-content">
+
+      <!-- VIEWPORT (3D Canvas) -->
+      <ui:VisualElement name="viewport" class="viewport">
+        <!-- Search + zoom controls -->
+        <ui:VisualElement name="viewport-overlay" class="viewport__overlay">
+          <ui:Label name="search-bar" class="search-bar" text="  🔍  Tìm tòa nhà, khu, phòng..." />
+          <ui:Button class="vp-btn" text="+" />
+          <ui:Button class="vp-btn" text="-" />
+          <ui:Button class="vp-btn" text="R" />
+        </ui:VisualElement>
+
+        <!-- Mini stats overlay (bottom-left) -->
+        <ui:VisualElement name="ministats" class="ministats">
+          <ui:VisualElement class="stat-card">
+            <ui:Label class="stat-card__num stat--occupied" text="—" />
+            <ui:Label class="stat-card__label" text="CÓ LỚP" />
+          </ui:VisualElement>
+          <ui:VisualElement class="stat-card">
+            <ui:Label class="stat-card__num stat--empty" text="—" />
+            <ui:Label class="stat-card__label" text="TRỐNG" />
+          </ui:VisualElement>
+          <ui:VisualElement class="stat-card">
+            <ui:Label class="stat-card__num stat--upcoming" text="—" />
+            <ui:Label class="stat-card__label" text="SẮP CÓ" />
+          </ui:VisualElement>
+          <ui:VisualElement class="stat-card">
+            <ui:Label class="stat-card__num stat--total" text="—" />
+            <ui:Label class="stat-card__label" text="TỔNG" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Legend (bottom-left, above ministats) -->
+        <ui:VisualElement name="legend" class="legend">
+          <ui:Label class="legend__title" text="TRẠNG THÁI" />
+          <ui:VisualElement class="legend__row">
+            <ui:VisualElement class="legend__dot dot--occupied" />
+            <ui:Label class="legend__text" text="Đang có lớp" />
+          </ui:VisualElement>
+          <ui:VisualElement class="legend__row">
+            <ui:VisualElement class="legend__dot dot--upcoming" />
+            <ui:Label class="legend__text" text="Sắp có lớp" />
+          </ui:VisualElement>
+          <ui:VisualElement class="legend__row">
+            <ui:VisualElement class="legend__dot dot--empty" />
+            <ui:Label class="legend__text" text="Phòng trống" />
+          </ui:VisualElement>
+          <ui:VisualElement class="legend__row">
+            <ui:VisualElement class="legend__dot dot--selected" />
+            <ui:Label class="legend__text" text="Đang chọn" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- SIDEBAR (Command Center panel, always-on overview) -->
+      <ui:VisualElement name="sidebar" class="sidebar">
+
+        <!-- Fixed header: campus or building identity -->
+        <ui:VisualElement name="building-header" class="building-header">
+          <ui:Label name="building-badge" class="building-badge" text="CAMPUS" />
+          <ui:Label name="building-name"  class="building-name"  text="Bách Khoa Đà Nẵng" />
+          <ui:Label name="building-meta"  class="building-meta"  text="Đang tải..." />
+        </ui:VisualElement>
+
+        <!-- Fixed status banner -->
+        <ui:VisualElement name="status-banner" class="status-banner status-banner--empty">
+          <ui:VisualElement class="status-dot status-dot--empty" />
+          <ui:VisualElement class="status-info">
+            <ui:Label class="status-label status-label--empty" text="ĐANG TẢI" />
+            <ui:Label class="status-desc" text="Đang khởi tạo dữ liệu..." />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Scrollable body (rebuilt every update) -->
+        <ui:ScrollView name="sidebar-scroll" class="sidebar__scroll"
+                       vertical-scroller-visibility="Hidden"
+                       horizontal-scroller-visibility="Hidden">
+          <ui:VisualElement name="sidebar-body" class="sidebar__body" />
+        </ui:ScrollView>
+
+      </ui:VisualElement>
+
+    </ui:VisualElement>
+
+    <!-- ALERT DROPDOWN (absolute overlay, top-right) -->
+    <ui:VisualElement name="alert-dropdown" class="alert-dropdown">
+      <ui:VisualElement class="alert-dropdown__header">
+        <ui:Label class="alert-dropdown__title" text="CẢNH BÁO HỆ THỐNG" />
+        <ui:Label name="alert-dropdown-count" class="alert-dropdown__count" text="Không có cảnh báo" />
+      </ui:VisualElement>
+      <ui:VisualElement name="alert-dropdown-list" class="alert-dropdown-list" />
+    </ui:VisualElement>
+
+    <!-- ALERT TOAST (absolute overlay) -->
+    <ui:VisualElement name="alert-toast" class="alert-toast">
+      <ui:Label class="alert-toast__icon" text="🔴" />
+      <ui:Label name="alert-toast-msg" class="alert-toast__msg" text="" />
+    </ui:VisualElement>
+
+  </ui:VisualElement>
+</ui:UXML>

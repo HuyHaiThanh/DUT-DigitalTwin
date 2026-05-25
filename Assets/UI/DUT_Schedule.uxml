@@ -1,0 +1,219 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:Style src="DUT_Main.uss" />
+  <ui:VisualElement class="schedule-root">
+
+    <!-- TOPBAR -->
+    <ui:VisualElement class="topbar">
+      <ui:Label class="topbar__logo" text="Digital Twin — Bách Khoa ĐN" />
+      <ui:VisualElement name="nav" class="topbar__nav">
+        <ui:Button name="nav-3d"        class="nav-btn"                 text="Campus 3D" />
+        <ui:Button name="nav-dashboard" class="nav-btn"                 text="Dashboard" />
+        <ui:Button name="nav-schedule"  class="nav-btn nav-btn--active" text="Lịch học" />
+      </ui:VisualElement>
+      <ui:VisualElement name="topbar-right" class="topbar__right">
+        <ui:VisualElement class="live-dot" />
+        <ui:Label class="live-label" text="LIVE" />
+        <ui:Label name="datetime-label" class="datetime-label" text="--" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+
+    <!-- BODY -->
+    <ui:VisualElement class="schedule-body">
+
+      <!-- LEFT: Filter -->
+      <ui:VisualElement class="sched-filter">
+        <ui:Label class="sched-search" text="  Tìm tòa nhà..." />
+
+        <ui:VisualElement class="sched-filter__section">
+          <ui:Label class="sched-filter__label" text="TUẦN" />
+          <ui:Button class="sched-day-btn sched-day-btn--active" text="14/05 – 20/05/2025" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="sched-filter__section">
+          <ui:Label class="sched-filter__label" text="NGÀY" />
+          <ui:Button class="sched-day-btn" text="Thứ 2  –  12/05" />
+          <ui:Button class="sched-day-btn sched-day-btn--active" text="Thứ 3  –  13/05" />
+          <ui:Button class="sched-day-btn" text="Thứ 4  –  14/05" />
+          <ui:Button class="sched-day-btn" text="Thứ 5  –  15/05" />
+          <ui:Button class="sched-day-btn" text="Thứ 6  –  16/05" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="filter-divider" />
+
+        <ui:VisualElement class="sched-filter__section">
+          <ui:Label class="sched-filter__label" text="TRẠNG THÁI" />
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check filter-check--on" />
+            <ui:Label class="filter-label" text="Đang có lớp" />
+          </ui:VisualElement>
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check filter-check--on" />
+            <ui:Label class="filter-label" text="Phòng trống" />
+          </ui:VisualElement>
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check filter-check--on" />
+            <ui:Label class="filter-label" text="Sắp có lớp" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="filter-divider" />
+
+        <ui:VisualElement class="sched-filter__section">
+          <ui:Label class="sched-filter__label" text="CHỨC NĂNG" />
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check filter-check--on" />
+            <ui:Label class="filter-label" text="Giảng đường" />
+          </ui:VisualElement>
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check filter-check--on" />
+            <ui:Label class="filter-label" text="Thí nghiệm" />
+          </ui:VisualElement>
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check" />
+            <ui:Label class="filter-label" text="Hội trường" />
+          </ui:VisualElement>
+          <ui:VisualElement class="filter-item">
+            <ui:VisualElement class="filter-check" />
+            <ui:Label class="filter-label" text="Xưởng TH" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:VisualElement>
+
+      <!-- RIGHT: Timeline grid -->
+      <ui:VisualElement class="sched-grid">
+
+        <!-- Header row: tòa nhà -->
+        <ui:VisualElement class="sched-header-row">
+          <ui:VisualElement class="sched-time-gutter" />
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="Tòa A" />
+            <ui:Label class="sched-col-khu" text="Khu A" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="Tòa C" />
+            <ui:Label class="sched-col-khu" text="Khu C" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="Tòa F" />
+            <ui:Label class="sched-col-khu" text="Khu F" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="PTN Điện" />
+            <ui:Label class="sched-col-khu" text="Khu I" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="Khu TN CK" />
+            <ui:Label class="sched-col-khu" text="Khu K" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="Tòa G" />
+            <ui:Label class="sched-col-khu" text="Khu G" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-col-header">
+            <ui:Label class="sched-col-name" text="PFIEV" />
+            <ui:Label class="sched-col-khu" text="Khu K" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Time rows -->
+        <ui:VisualElement class="sched-time-row">
+          <ui:Label class="sched-time-label" text="07:30" />
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="Lập trình HĐT" />
+            <ui:Label class="sched-cell__info" text="CO2003 · N04" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="Quản lý DA" />
+            <ui:Label class="sched-cell__info" text="PM3001 · N01" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="Giải tích" />
+            <ui:Label class="sched-cell__info" text="MA1001 · N02" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="TN Điện KT" />
+            <ui:Label class="sched-cell__info" text="EE2001 · N01" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="Eng Design" />
+            <ui:Label class="sched-cell__info" text="ED4001 · B12" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="sched-time-row">
+          <ui:Label class="sched-time-label" text="09:30" />
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="Cấu trúc DL" />
+            <ui:Label class="sched-cell__info" text="CO2011" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="Vật lý ĐC" />
+            <ui:Label class="sched-cell__info" text="PH1001 · N02" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--occupied">
+            <ui:Label class="sched-cell__course" text="TN Điện KT" />
+            <ui:Label class="sched-cell__info" text="EE2001 · N01" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="TN Cơ khí" />
+            <ui:Label class="sched-cell__info" text="ME3001" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="sched-time-row">
+          <ui:Label class="sched-time-label" text="12:00" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="sched-time-row">
+          <ui:Label class="sched-time-label" text="13:00" />
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="Mạng máy tính" />
+            <ui:Label class="sched-cell__info" text="CO3041" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="Kế toán QT" />
+            <ui:Label class="sched-cell__info" text="AC2011" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="CNXH KH" />
+            <ui:Label class="sched-cell__info" text="ML1001" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="TN Hàn" />
+            <ui:Label class="sched-cell__info" text="ME2041" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--upcoming">
+            <ui:Label class="sched-cell__course" text="TH Môi trường" />
+            <ui:Label class="sched-cell__info" text="EN3001" />
+          </ui:VisualElement>
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+        </ui:VisualElement>
+
+        <ui:VisualElement class="sched-time-row">
+          <ui:Label class="sched-time-label" text="15:00" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+          <ui:VisualElement class="sched-cell sched-cell--empty" />
+        </ui:VisualElement>
+
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
