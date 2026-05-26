@@ -28,9 +28,12 @@ namespace DUT.UI
         public enum Screen { Campus3D, Dashboard, Schedule }
         Screen _current = Screen.Campus3D;
 
-        // ── Tiết DUT → giờ bắt đầu ───────────────────────────────────
-        static readonly int[] TietHour = { 0, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15, 16, 17, 18 };
-        static readonly int[] TietMin  = { 0, 0, 50,40,30,20,10,30, 20, 10,  0, 50, 40, 30, 20 };
+        // ── Tiết DUT — giờ bắt đầu chính xác (10 phút nghỉ, nghỉ trưa 40 phút) ──
+        // Sáng:  1=7:00  2=8:00  3=9:00  4=10:00  5=11:00
+        // Chiều: 6=12:30 7=13:30 8=14:30 9=15:30  10=16:30
+        // Tối:  11=17:30 12=18:30 13=19:30 14=20:30
+        static readonly int[] TietHour = { 0,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+        static readonly int[] TietMin  = { 0,  0,  0,  0,  0,  0, 30, 30, 30, 30, 30, 30, 30, 30, 30 };
 
         void Awake() => Instance = this;
 
@@ -111,123 +114,262 @@ namespace DUT.UI
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // DASHBOARD
+        // DASHBOARD v2
         // ═══════════════════════════════════════════════════════════════
         IEnumerator Co_PopulateDashboard()
         {
-            yield return null; // espera 1 frame para el UIDocument se active
+            yield return null;
             var root = docDashboard?.rootVisualElement;
             if (root == null || store == null) yield break;
 
             var buildings = store.AllBuildings;
-            int total    = buildings.Count;
-            int occupied = buildings.Count(b => store.GetStatus(b.building_id) == BuildingStatus.Occupied);
-            int empty    = buildings.Count(b => store.GetStatus(b.building_id) == BuildingStatus.Empty);
-            int upcoming = buildings.Count(b => store.GetStatus(b.building_id) == BuildingStatus.Upcoming);
+            int total = buildings.Count;
+            var now = DUT.UI.DUTTime.Now;
+            int nowMin = now.Hour * 60 + now.Minute;
+            int nowH   = now.Hour;
 
-            // ── Stat cards ────────────────────────────────────────────
-            SetStatCard(root, 0, total.ToString(),    "Campus DUT");
-            SetStatCard(root, 1, occupied.ToString(), $"{(total>0?(occupied*100/total):0)}% tổng số");
-            SetStatCard(root, 2, empty.ToString(),    $"{(total>0?(empty*100/total):0)}% tổng số");
-            SetStatCard(root, 3, upcoming.ToString(), "trong 30 phút");
-
-            // ── Bar chart: occupied per "tiết" nhóm theo giờ ─────────
-            // Tính số buildings có lớp theo tiết (7-17h)
-            var hourBars = new int[11]; // index 0=7h, 1=8h, ..., 10=17h
+            // ── Aggregate stats ──────────────────────────────────────
+            int roomsTotal = 0, roomsOcc = 0, studentsNow = 0, towsOcc = 0, towsUpc = 0;
             foreach (var b in buildings)
             {
+                roomsTotal += b.so_phong;
+                var status = store.GetStatus(b.building_id);
+                if (status == BuildingStatus.Occupied) towsOcc++;
+                else if (status == BuildingStatus.Upcoming) towsUpc++;
                 var live = store.GetLiveData(b.building_id);
                 if (live?.schedule?.today_classes == null) continue;
                 foreach (var cls in live.schedule.today_classes)
                 {
-                    if (!TryParseTime(cls.time_start, out int sh, out _)) continue;
-                    if (!TryParseTime(cls.time_end,   out int eh, out _)) continue;
-                    for (int h = Math.Max(7, sh); h < Math.Min(18, eh); h++)
-                        if (h - 7 < hourBars.Length) hourBars[h - 7]++;
+                    TryParseTime(cls.time_start, out int sh, out int sm);
+                    TryParseTime(cls.time_end,   out int eh, out int em);
+                    int sMin = sh*60+sm, eMin = eh*60+em;
+                    if (nowMin >= sMin && nowMin < eMin) { roomsOcc++; studentsNow += cls.student_count; }
                 }
             }
-            int barMax = Mathf.Max(1, hourBars.Max());
-            var barCols = root.Query<VisualElement>("", "bar-col").ToList();
-            for (int i = 0; i < barCols.Count && i < hourBars.Length; i++)
+            int roomsEmpty = Mathf.Max(0, roomsTotal - roomsOcc);
+
+            // ── 6 KPI chips ─────────────────────────────────────────
+            root.Q<Label>("kpi-val-0")?.SetText(roomsOcc.ToString());
+            root.Q<Label>("kpi-sub-0")?.SetText($"/ {roomsTotal} tổng");
+            root.Q<Label>("kpi-val-1")?.SetText(roomsEmpty.ToString());
+            root.Q<Label>("kpi-sub-1")?.SetText("Sẵn sàng sử dụng");
+            root.Q<Label>("kpi-val-2")?.SetText(studentsNow.ToString());
+            root.Q<Label>("kpi-sub-2")?.SetText("Hiện tại");
+            root.Q<Label>("kpi-val-3")?.SetText($"{towsOcc}/{total}");
+            root.Q<Label>("kpi-sub-3")?.SetText($"{towsUpc} sắp có");
+            int totalSlots = buildings.Sum(b => store.GetLiveData(b.building_id)?.schedule?.today_classes?.Count ?? 0);
+            root.Q<Label>("kpi-val-4")?.SetText(totalSlots.ToString());
+            root.Q<Label>("kpi-sub-4")?.SetText("Slots lịch hôm nay");
+
+            // Alert count from live data
+            int alertCount = 0;
+            var alertItems = new List<(string title, AlertSeverity sev)>();
+            foreach (var b in buildings)
             {
-                var fill = barCols[i].Q<VisualElement>("", "bar-fill");
-                if (fill == null) continue;
-                float ratio = (float)hourBars[i] / barMax;
-                fill.style.height = new StyleLength(Mathf.Max(4, ratio * 100));
-                // Màu theo mức độ
-                fill.RemoveFromClassList("bar-fill--occupied");
-                fill.RemoveFromClassList("bar-fill--upcoming");
-                if (ratio > 0.7f) fill.AddToClassList("bar-fill--occupied");
-                else if (ratio > 0.3f) fill.AddToClassList("bar-fill--upcoming");
+                var live = store.GetLiveData(b.building_id);
+                if (live == null) continue;
+                foreach (var ticket in live.maintenance.active_tickets)
+                { alertItems.Add(($"🔧 {b.ten_ngan}: {ticket.title}", ticket.severity)); alertCount++; }
+                if (live.equipment.has_critical_error)
+                { alertItems.Add(($"🖥 {b.ten_ngan}: Thiết bị lỗi", AlertSeverity.Critical)); alertCount++; }
+                if (live.infrastructure.has_alert)
+                { alertItems.Add(($"⚡ {b.ten_ngan}: Cảnh báo hạ tầng", AlertSeverity.Warning)); alertCount++; }
+            }
+            root.Q<Label>("kpi-val-5")?.SetText(alertCount > 0 ? alertCount.ToString() : "0");
+            root.Q<Label>("kpi-sub-5")?.SetText(alertCount > 0 ? "Cần xử lý" : "OK");
+            var kv5 = root.Q<Label>("kpi-val-5");
+            if (kv5 != null)
+            {
+                kv5.RemoveFromClassList("dash-kpi--ok"); kv5.RemoveFromClassList("dash-kpi--alert");
+                kv5.AddToClassList(alertCount > 0 ? "dash-kpi--alert" : "dash-kpi--ok");
             }
 
-            // ── Donut: phân bổ chức năng ──────────────────────────────
-            int cntGD = buildings.Count(b => b.chuc_nang == BuildingFunction.GiangDuong);
-            int cntTN = buildings.Count(b => b.chuc_nang == BuildingFunction.ThiNghiem);
-            int cntHC = buildings.Count(b => b.chuc_nang == BuildingFunction.HanhChinh);
-            int cntTC = total - cntGD - cntTN - cntHC;
-            var donutPct = root.Q<Label>("", "donut-pct");
-            if (donutPct != null) donutPct.text = total > 0 ? $"{cntGD * 100 / total}%" : "—";
-            var legendVals = root.Query<Label>("", "donut-legend-val").ToList();
-            if (legendVals.Count >= 4)
+            // ── Zone breakdown ──────────────────────────────────────
+            var zoneList = root.Q<VisualElement>("dash-zone-list");
+            if (zoneList != null)
             {
-                legendVals[0].text = cntGD.ToString();
-                legendVals[1].text = cntTN.ToString();
-                legendVals[2].text = cntHC.ToString();
-                legendVals[3].text = cntTC.ToString();
-            }
-
-            // ── Top list: buildings có nhiều lớp nhất hôm nay ─────────
-            var ranked = buildings
-                .Select(b => (b, cnt: store.GetLiveData(b.building_id)?.schedule?.today_classes?.Count ?? 0))
-                .OrderByDescending(x => x.cnt)
-                .Take(5)
-                .ToList();
-
-            var rows = root.Query<VisualElement>("", "top-list-row").ToList();
-            int maxCnt = ranked.Count > 0 ? Math.Max(1, ranked[0].cnt) : 1;
-            for (int i = 0; i < rows.Count && i < ranked.Count; i++)
-            {
-                var (b, cnt) = ranked[i];
-                rows[i].Q<Label>("", "top-list__name")?.SetText(b.ten_ngan);
-                var fill = rows[i].Q<VisualElement>("", "top-list__bar-fill");
-                if (fill != null) fill.style.width = new StyleLength(new Length(cnt * 100f / maxCnt, LengthUnit.Percent));
-                var pct = rows[i].Q<Label>("", "top-list__pct");
-                if (pct != null) pct.text = cnt > 0 ? $"{cnt * 100 / maxCnt}%" : "—";
-            }
-
-            // ── Heatmap: khu × giờ ─────────────────────────────────────
-            var hmRows = root.Query<VisualElement>("", "heatmap-row").ToList();
-            var khuList = new[] { "A", "C", "F", "I", "K", "G", "D" };
-            for (int ri = 0; ri < hmRows.Count && ri < khuList.Length; ri++)
-            {
-                string khu = khuList[ri];
-                var khuBldgs = store.GetBuildingsInKhu(khu);
-                var cells = hmRows[ri].Query<VisualElement>("", "heatmap-cell").ToList();
-                int[] hours = { 7, 9, 11, 13, 15, 17, 19, 21 };
-                for (int ci = 0; ci < cells.Count && ci < hours.Length; ci++)
+                zoneList.Clear();
+                var zones = buildings.Select(b => b.ten_khu).Where(z => !string.IsNullOrEmpty(z))
+                            .Distinct().OrderBy(z => z).ToList();
+                foreach (var zone in zones)
                 {
-                    int h = hours[ci];
-                    int occ = khuBldgs.Count(b =>
+                    var zb = store.GetBuildingsInKhu(zone);
+                    if (zb.Count == 0) continue;
+                    int zt = zb.Sum(b => b.so_phong), zo = 0;
+                    foreach (var b in zb)
                     {
                         var live = store.GetLiveData(b.building_id);
-                        if (live?.schedule?.today_classes == null) return false;
-                        return live.schedule.today_classes.Any(cls =>
+                        if (live?.schedule?.today_classes == null) continue;
+                        foreach (var cls in live.schedule.today_classes)
                         {
-                            TryParseTime(cls.time_start, out int sh, out _);
-                            TryParseTime(cls.time_end,   out int eh, out _);
-                            return h >= sh && h < eh;
-                        });
-                    });
-                    int khuCount = Math.Max(1, khuBldgs.Count);
-                    int level = occ == 0 ? 0 : occ * 4 / khuCount + 1;
-                    level = Mathf.Clamp(level, 0, 4);
-                    for (int lv = 0; lv <= 4; lv++) cells[ci].RemoveFromClassList($"hm-{lv}");
-                    cells[ci].AddToClassList($"hm-{level}");
+                            TryParseTime(cls.time_start, out int sh, out int sm);
+                            TryParseTime(cls.time_end,   out int eh, out int em);
+                            if (nowMin >= sh*60+sm && nowMin < eh*60+em) zo++;
+                        }
+                    }
+                    int zpct = zt > 0 ? Mathf.Clamp(zo*100/zt, 0, 100) : 0;
+
+                    var row = new VisualElement(); row.AddToClassList("dash-zone-row");
+                    var hdr = new VisualElement(); hdr.AddToClassList("dash-zone-header");
+                    var nm  = new Label($"Khu {zone}"); nm.AddToClassList("dash-zone-name");
+                    var cnt = new Label($"{zo}/{zt} phòng"); cnt.AddToClassList("dash-zone-count");
+                    if (zo > 0) cnt.AddToClassList("dash-zone-count--active");
+                    hdr.Add(nm); hdr.Add(cnt);
+                    var track = new VisualElement(); track.AddToClassList("dash-bar-track");
+                    var fill  = new VisualElement(); fill.AddToClassList("dash-bar-fill");
+                    fill.AddToClassList(zpct > 60 ? "dash-bar-fill--peak" : zpct > 30 ? "dash-bar-fill--mid" : "dash-bar-fill--low");
+                    fill.style.width = new StyleLength(new Length(zpct, LengthUnit.Percent));
+                    track.Add(fill);
+                    var pctL = new Label($"{zpct}% sử dụng"); pctL.AddToClassList("dash-zone-pct");
+                    row.Add(hdr); row.Add(track); row.Add(pctL);
+                    zoneList.Add(row);
                 }
             }
 
-            // ── Datetime ──────────────────────────────────────────────
+            // ── Class type (total / current) ─────────────────────────
+            var ctList = root.Q<VisualElement>("dash-classtype-list");
+            if (ctList != null)
+            {
+                ctList.Clear();
+                foreach (var (lbl, val, isCrit) in new[] {
+                    ("Tổng slots lịch", totalSlots, false),
+                    ("Phòng có lớp ngay", roomsOcc, true),
+                })
+                {
+                    var ct  = new VisualElement(); ct.AddToClassList("dash-classtype-row");
+                    var ch  = new VisualElement(); ch.AddToClassList("dash-classtype-header");
+                    var cn  = new Label(lbl); cn.AddToClassList("dash-classtype-name");
+                    var cc  = new Label($"{val}"); cc.AddToClassList("dash-classtype-count");
+                    cc.AddToClassList(isCrit ? "dash-classtype-count--exam" : "dash-classtype-count--bu");
+                    ch.Add(cn); ch.Add(cc);
+                    int pct2 = totalSlots > 0 && val > 0 ? val*100/totalSlots : 0;
+                    var trk = new VisualElement(); trk.AddToClassList("dash-bar-track");
+                    var fl  = new VisualElement(); fl.AddToClassList("dash-bar-fill");
+                    fl.AddToClassList(isCrit ? "dash-bar-fill--peak" : "dash-bar-fill--low");
+                    fl.style.width = new StyleLength(new Length(pct2, LengthUnit.Percent));
+                    trk.Add(fl);
+                    ct.Add(ch); ct.Add(trk);
+                    ctList.Add(ct);
+                }
+            }
+
+            // ── Hourly chart (14 bars 7h-20h) ────────────────────────
+            var hourlyChart = root.Q<VisualElement>("dash-hourly-chart");
+            if (hourlyChart != null)
+            {
+                hourlyChart.Clear();
+                int[] hourSV = new int[14];
+                foreach (var b in buildings)
+                {
+                    var live = store.GetLiveData(b.building_id);
+                    if (live?.schedule?.today_classes == null) continue;
+                    foreach (var cls in live.schedule.today_classes)
+                    {
+                        TryParseTime(cls.time_start, out int sh, out int sm);
+                        TryParseTime(cls.time_end,   out int eh, out int em);
+                        int sMin = sh*60+sm, eMin = eh*60+em;
+                        for (int hi = 0; hi < 14; hi++)
+                        {
+                            int hS = (7+hi)*60, hE = (8+hi)*60;
+                            if (sMin < hE && eMin > hS) hourSV[hi] += cls.student_count;
+                        }
+                    }
+                }
+                int maxSV = Mathf.Max(1, hourSV.Max());
+                for (int i = 0; i < 14; i++)
+                {
+                    int h = 7 + i;
+                    bool isNow = h == nowH;
+                    float ratio = (float)hourSV[i] / maxSV;
+                    var col = new VisualElement(); col.AddToClassList("dash-hourly-col");
+                    var bar = new VisualElement(); bar.AddToClassList("dash-hourly-bar");
+                    bar.style.height = new StyleLength(Mathf.Max(2f, ratio * 110f));
+                    if (isNow)             bar.AddToClassList("dash-hourly-bar--now");
+                    else if (ratio > 0.6f) bar.AddToClassList("dash-hourly-bar--peak");
+                    else if (hourSV[i]>0)  bar.AddToClassList("dash-hourly-bar--normal");
+                    var lbl = new Label($"{h:00}"); lbl.AddToClassList("dash-hourly-label");
+                    if (isNow) lbl.AddToClassList("dash-hourly-label--now");
+                    col.Add(bar); col.Add(lbl);
+                    hourlyChart.Add(col);
+                }
+            }
+
+            // ── Alert table ─────────────────────────────────────────
+            var alertSection = root.Q<VisualElement>("dash-alert-section");
+            if (alertSection != null)
+            {
+                alertSection.Clear();
+                if (alertItems.Count > 0)
+                {
+                    var atitle = new Label($"CẢNH BÁO HỆ THỐNG ({alertItems.Count})");
+                    atitle.AddToClassList("dash-alert-title");
+                    alertSection.Add(atitle);
+                    var box = new VisualElement(); box.AddToClassList("dash-alert-box");
+                    foreach (var (msg, sev) in alertItems.Take(5))
+                    {
+                        bool isCrit = sev == AlertSeverity.Critical;
+                        var arow = new VisualElement(); arow.AddToClassList("dash-alert-row");
+                        var dot  = new VisualElement(); dot.AddToClassList("dash-alert-dot");
+                        dot.AddToClassList(isCrit ? "dash-alert-dot--critical" : "dash-alert-dot--warning");
+                        var msgL = new Label(msg); msgL.AddToClassList("dash-alert-msg");
+                        var sevL = new Label(isCrit ? "Critical" : "Warning"); sevL.AddToClassList("dash-alert-sev");
+                        sevL.AddToClassList(isCrit ? "dash-alert-sev--critical" : "dash-alert-sev--warning");
+                        arow.Add(dot); arow.Add(msgL); arow.Add(sevL);
+                        box.Add(arow);
+                    }
+                    alertSection.Add(box);
+                }
+            }
+
+            // ── Heatmap (zones × 14h) ────────────────────────────────
+            var heatmap = root.Q<VisualElement>("dash-heatmap");
+            if (heatmap != null)
+            {
+                heatmap.Clear();
+                var zones2 = buildings.Select(b => b.ten_khu).Where(z => !string.IsNullOrEmpty(z))
+                             .Distinct().OrderBy(z => z).ToList();
+                foreach (var zone in zones2)
+                {
+                    var zb = store.GetBuildingsInKhu(zone);
+                    if (zb.Count == 0) continue;
+                    int zt = Mathf.Max(1, zb.Sum(b => b.so_phong));
+                    var row = new VisualElement(); row.AddToClassList("dash-hm-row");
+                    var zl  = new Label(zone); zl.AddToClassList("dash-hm-zone");
+                    row.Add(zl);
+                    for (int ci = 0; ci < 14; ci++)
+                    {
+                        int h = 7 + ci; bool isNow = h == nowH;
+                        int occ = 0;
+                        foreach (var b in zb)
+                        {
+                            var live = store.GetLiveData(b.building_id);
+                            if (live?.schedule?.today_classes == null) continue;
+                            foreach (var cls in live.schedule.today_classes)
+                            {
+                                TryParseTime(cls.time_start, out int sh, out _);
+                                TryParseTime(cls.time_end,   out int eh, out _);
+                                if (sh < h+1 && eh > h) occ++;
+                            }
+                        }
+                        int intensity = occ == 0 ? 0 : Mathf.Clamp(occ*4/zt+1, 1, 4);
+                        var cell = new VisualElement(); cell.AddToClassList("dash-hm-cell");
+                        cell.AddToClassList($"hm-{intensity}");
+                        if (isNow) cell.AddToClassList("dash-hm-cell--now");
+                        row.Add(cell);
+                    }
+                    heatmap.Add(row);
+                }
+            }
+
+            // ── Heatmap X-labels ────────────────────────────────────
+            var xlabels = root.Q<VisualElement>("dash-hm-xlabels");
+            if (xlabels != null)
+            {
+                xlabels.Clear();
+                foreach (int h in new[] { 7, 9, 11, 13, 15, 17, 19 })
+                { var xl = new Label($"{h}"); xl.AddToClassList("dash-heatmap-xlabel"); xlabels.Add(xl); }
+            }
+
             UpdateDatetime(root);
         }
 
@@ -240,9 +382,9 @@ namespace DUT.UI
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // SCHEDULE
+        // SCHEDULE v2 — Room × Tiết grid
         // ═══════════════════════════════════════════════════════════════
-        int _schedDayOffset = 0; // 0 = hôm nay, -1 = hôm qua, +1 = ngày mai
+        int _schedDayOffset = 0;
 
         IEnumerator Co_PopulateSchedule()
         {
@@ -250,25 +392,37 @@ namespace DUT.UI
             var root = docSchedule?.rootVisualElement;
             if (root == null || store == null) yield break;
 
-            // Bind day buttons
-            var dayBtns = root.Query<Button>("", "sched-day-btn").ToList();
-            for (int i = 0; i < dayBtns.Count; i++)
+            // ── Thu buttons ─────────────────────────────────────────
+            var thuRow = root.Q<VisualElement>("sched-thu-row");
+            if (thuRow != null)
             {
-                int offset = i - GetTodayIndex(); // offset từ đầu tuần đến hôm nay
-                int finalOffset = i;
-                dayBtns[i].RegisterCallback<ClickEvent>(_ =>
+                thuRow.Clear();
+                var labels = new[] { "T2", "T3", "T4", "T5", "T6" };
+                var today = DUT.UI.DUTTime.Now;
+                int dow = (int)today.DayOfWeek;
+                var monday = today.AddDays(dow == 0 ? -6 : -(dow - 1));
+                int todayIdx = GetTodayIndex();
+                _schedDayOffset = todayIdx;
+
+                for (int i = 0; i < 5; i++)
                 {
-                    _schedDayOffset = finalOffset;
-                    StartCoroutine(Co_PopulateScheduleGrid(root));
-                    // Toggle active
-                    foreach (var b in dayBtns) b.RemoveFromClassList("sched-day-btn--active");
-                    dayBtns[finalOffset].AddToClassList("sched-day-btn--active");
-                });
+                    int idx = i;
+                    var d = monday.AddDays(i);
+                    var btn = new Button(); btn.AddToClassList("sched-thu-btn");
+                    btn.text = $"{labels[i]}  {d:dd/MM}";
+                    if (i == todayIdx) btn.AddToClassList("sched-thu-btn--active");
+                    Button captured = btn;
+                    btn.RegisterCallback<ClickEvent>(_ =>
+                    {
+                        _schedDayOffset = idx;
+                        thuRow.Query<Button>().ForEach(b => b.RemoveFromClassList("sched-thu-btn--active"));
+                        captured.AddToClassList("sched-thu-btn--active");
+                        StartCoroutine(Co_PopulateScheduleGrid(root));
+                    });
+                    thuRow.Add(btn);
+                }
             }
 
-            // Label tuần
-            var weekBtn = root.Q<Button>("", "sched-day-btn");
-            UpdateWeekDayLabels(root);
             UpdateDatetime(root);
             yield return StartCoroutine(Co_PopulateScheduleGrid(root));
         }
@@ -304,107 +458,220 @@ namespace DUT.UI
         IEnumerator Co_PopulateScheduleGrid(VisualElement root)
         {
             yield return null;
+            var body = root.Q<VisualElement>("sched-room-body");
+            if (body == null) yield break;
+            body.Clear();
 
-            // DUT thu: T2=2, T3=3... Chuyển từ schedule offset (0=T2)
-            int dutThu = _schedDayOffset + 2; // 0→2(T2), 1→3(T3)...
+            int dutThu = _schedDayOffset + 2;
+            var now = DUT.UI.DUTTime.Now;
+            int nowMin = now.Hour * 60 + now.Minute;
 
-            // Chọn 7 buildings có nhiều lớp nhất trong ngày đó
-            var buildings = store.AllBuildings
-                .Select(b => (b, classes: GetClassesForDay(b.building_id, dutThu)))
-                .Where(x => x.classes.Count > 0)
-                .OrderByDescending(x => x.classes.Count)
-                .Take(7)
-                .ToList();
+            // Giờ đúng của từng tiết (phút từ 00:00) — có nghỉ giữa tiết và nghỉ trưa
+            var tietSM = new[] {0, 420,480,540,600,660,750,810,870,930, 990,1050,1110,1170,1230};
+            var tietEM = new[] {0, 470,530,590,650,710,800,860,920,980,1040,1100,1160,1220,1280};
+            int nowTiet = 0;
+            for (int t = 1; t <= 14; t++)
+                if (nowMin >= tietSM[t] && nowMin < tietEM[t]) { nowTiet = t; break; }
 
-            // Fallback: nếu không có classes hôm nay (real data chưa đủ),
-            // lấy buildings có any today_classes (mock data)
-            if (buildings.Count == 0) {
-                buildings = store.AllBuildings
-                    .Select(b => {
-                        var live = store.GetLiveData(b.building_id);
-                        var cls = live?.schedule?.today_classes ?? new List<ClassInfo>();
-                        return (b, classes: cls);
-                    })
-                    .Where(x => x.classes.Count > 0)
-                    .OrderByDescending(x => x.classes.Count)
-                    .Take(7)
-                    .ToList();
-            }
-
-            // Nếu vẫn không đủ 7, bổ sung buildings giảng đường
-            if (buildings.Count < 7) {
-                var extras = store.AllBuildings
-                    .Where(b => (b.chuc_nang == BuildingFunction.GiangDuong ||
-                                 b.chuc_nang == BuildingFunction.ThiNghiem) &&
-                                !buildings.Any(x => x.b.building_id == b.building_id))
-                    .Take(7 - buildings.Count)
-                    .Select(b => (b, classes: new List<ClassInfo>()));
-                buildings.AddRange(extras);
-            }
-
-            // ── Header columns ────────────────────────────────────────
-            var headers = root.Query<VisualElement>("", "sched-col-header").ToList();
-            for (int i = 0; i < headers.Count && i < buildings.Count; i++)
+            // Highlight header
+            var tietHdrs = root.Query<VisualElement>("", "sched-tiet-col-header").ToList();
+            for (int i = 0; i < tietHdrs.Count && i < 14; i++)
             {
-                var (b, _) = buildings[i];
-                headers[i].Q<Label>("", "sched-col-name")?.SetText(b.ten_ngan);
-                headers[i].Q<Label>("", "sched-col-khu") ?.SetText($"Khu {b.ten_khu}");
+                bool isN = (i + 1) == nowTiet;
+                tietHdrs[i].RemoveFromClassList("sched-tiet-col-header--now");
+                if (isN) tietHdrs[i].AddToClassList("sched-tiet-col-header--now");
+                var nl = tietHdrs[i].Q<Label>("", "sched-tiet-num");
+                if (nl != null) { nl.RemoveFromClassList("sched-tiet-num--now"); if (isN) nl.AddToClassList("sched-tiet-num--now"); }
             }
 
-            // ── Time rows ─────────────────────────────────────────────
-            // Tiết slots: 1-4 (7:00-9:30), 5-7 (10:20-12:10), 7-10 (12:30-15:00), 10-13 (15:00-17:30)
-            var timeSlots = new[] { 1, 5, 7, 10, 13 }; // tiết đầu mỗi row
-            var timeLabels = new[] { "07:00", "10:20", "12:30", "15:00", "17:30" };
-
-            var timeRows = root.Query<VisualElement>("", "sched-time-row").ToList();
-            for (int ri = 0; ri < timeRows.Count && ri < timeSlots.Length; ri++)
+            // Collect room → classes
+            var roomMap = new Dictionary<string, List<(ClassInfo cls, int ts, int te)>>();
+            foreach (var b in store.AllBuildings)
             {
-                int tiet = timeSlots[ri];
-                int nextTiet = ri + 1 < timeSlots.Length ? timeSlots[ri + 1] : 15;
-
-                // Label giờ
-                var lbl = timeRows[ri].Q<Label>("", "sched-time-label");
-                if (lbl != null) lbl.text = timeLabels[ri];
-
-                // Cells
-                var cells = timeRows[ri].Query<VisualElement>("", "sched-cell").ToList();
-                for (int ci = 0; ci < cells.Count && ci < buildings.Count; ci++)
+                var classes = GetClassesForDay(b.building_id, dutThu);
+                foreach (var cls in classes)
                 {
-                    var (_, classes) = buildings[ci];
-
-                    // Tìm lớp trùng với slot này
-                    var cls = classes.FirstOrDefault(c =>
+                    // Extract room key
+                    string room = null;
+                    if (cls.room_id?.Contains("phong=") == true)
                     {
-                        int cs, ce;
-                        bool hasEnc = c.room_id?.Contains("tiet=") ?? false;
-                        if (hasEnc) ParseTiet(ExtractTietFromRoomId(c.room_id), out cs, out ce);
-                        else        (cs, ce) = TietRangeFromClass(c);
-                        return cs <= nextTiet - 1 && ce >= tiet;
-                    });
-
-                    cells[ci].ClearClassList();
-                    cells[ci].AddToClassList("sched-cell");
-
-                    if (cls != null)
-                    {
-                        bool isNow = IsOngoing(cls);
-                        bool isSoon = !isNow && IsUpcoming(cls);
-                        cells[ci].AddToClassList(isNow ? "sched-cell--occupied" :
-                                                 isSoon ? "sched-cell--upcoming" : "sched-cell--occupied");
-
-                        cells[ci].Q<Label>("", "sched-cell__course")?.SetText(
-                            cls.class_name.Length > 16 ? cls.class_name.Substring(0, 14) + "…" : cls.class_name);
-                        cells[ci].Q<Label>("", "sched-cell__info")?.SetText(
-                            $"{cls.time_start}  ·  {cls.student_count} SV");
+                        var m = System.Text.RegularExpressions.Regex.Match(cls.room_id, @"phong=([^&]+)");
+                        if (m.Success) room = m.Groups[1].Value;
                     }
-                    else
-                    {
-                        cells[ci].AddToClassList("sched-cell--empty");
-                        cells[ci].Q<Label>("", "sched-cell__course")?.SetText("");
-                        cells[ci].Q<Label>("", "sched-cell__info") ?.SetText("");
-                    }
+                    if (string.IsNullOrEmpty(room)) room = b.ten_ngan;
+
+                    ParseTiet(ExtractTietFromRoomId(cls.room_id), out int ts, out int te);
+                    if (ts <= 0) { var r2 = TietRangeFromClass(cls); ts = r2.start; te = r2.end; }
+                    ts = Mathf.Max(1, ts); te = Mathf.Min(14, Mathf.Max(ts, te));
+
+                    if (!roomMap.ContainsKey(room)) roomMap[room] = new List<(ClassInfo, int, int)>();
+                    roomMap[room].Add((cls, ts, te));
                 }
             }
+
+            // ── Stats chip ───────────────────────────────────────────
+            var statsArea = root.Q<VisualElement>("sched-stats-area");
+            if (statsArea != null)
+            {
+                statsArea.Clear();
+                var chip = new VisualElement(); chip.AddToClassList("sched-stat-chip");
+                var numL = new Label(roomMap.Count.ToString()); numL.AddToClassList("sched-stat-chip__num");
+                numL.style.color = new StyleColor(new Color(46f/255, 143f/255, 232f/255));
+                var lblL = new Label("phòng có lịch"); lblL.AddToClassList("sched-stat-chip__label");
+                chip.Add(numL); chip.Add(lblL);
+                statsArea.Add(chip);
+
+                if (nowTiet > 0 && _schedDayOffset == GetTodayIndex())
+                {
+                    var nowChip = new VisualElement(); nowChip.AddToClassList("sched-now-chip");
+                    var dot = new VisualElement(); dot.AddToClassList("sched-now-dot");
+                    var nl = new Label($"Tiết {nowTiet} · {TietStartStr(nowTiet)}");
+                    nl.AddToClassList("sched-now-label");
+                    nowChip.Add(dot); nowChip.Add(nl);
+                    statsArea.Add(nowChip);
+                }
+            }
+
+            // ── Grid: build động từ data thực (chỉ phòng có lịch) ────────
+            // Group phòng theo prefix tòa nhà, sắp xếp theo tên
+            var grouped = new SortedDictionary<string, List<string>>();
+            foreach (var room in roomMap.Keys)
+            {
+                string pfx = GetRoomPrefix(room);
+                if (!grouped.ContainsKey(pfx)) grouped[pfx] = new List<string>();
+                grouped[pfx].Add(room);
+            }
+
+            foreach (var (prefix, rooms) in grouped)
+            {
+                // Group header
+                var grpHdr = new VisualElement(); grpHdr.AddToClassList("sched-group-header");
+                var grpLbl = new Label(GetGroupLabel(prefix)); grpLbl.AddToClassList("sched-group-label");
+                var grpCnt = new Label(rooms.Count.ToString()); grpCnt.AddToClassList("sched-group-count");
+                grpHdr.Add(grpLbl); grpHdr.Add(grpCnt);
+                body.Add(grpHdr);
+
+                foreach (var roomId in rooms.OrderBy(r => r))
+                    body.Add(BuildRoomRow(roomId, roomMap[roomId], nowTiet));
+            }
+
+            if (roomMap.Count == 0)
+            {
+                var empty = new Label("Không có lịch học ngày này");
+                empty.AddToClassList("sched-empty-label");
+                empty.style.unityTextAlign = TextAnchor.MiddleCenter;
+                empty.style.paddingTop = 40;
+                empty.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+                body.Add(empty);
+            }
+        }
+
+        static VisualElement BuildRoomRow(
+            string roomId,
+            List<(ClassInfo cls, int ts, int te)> rSlots,
+            int nowTiet)
+        {
+            var tietOcc = new HashSet<int>();
+            foreach (var (_, rts, rte) in rSlots)
+                for (int t = rts; t <= rte; t++) tietOcc.Add(t);
+
+            var row = new VisualElement(); row.AddToClassList("sched-room-row");
+            var lc  = new VisualElement(); lc.AddToClassList("sched-room-label-cell");
+            var rid = new Label(roomId); rid.AddToClassList("sched-room-id");
+            lc.Add(rid); row.Add(lc);
+
+            for (int t = 1; t <= 14; t++)
+            {
+                var cell = new VisualElement(); cell.AddToClassList("sched-tiet-data-col");
+                if (t == nowTiet)        cell.AddToClassList("sched-tiet-data-col--now");
+                else if (t % 2 == 0)     cell.AddToClassList("sched-tiet-data-col--even");
+                if (tietOcc.Contains(t)) cell.AddToClassList("sched-tiet-data-col--occ");
+                row.Add(cell);
+            }
+
+            var seenTs     = new HashSet<int>();
+            var blockInfos = new List<(VisualElement ve, int ts, int span)>();
+            foreach (var (cls, ts, te) in rSlots.OrderBy(s => s.ts))
+            {
+                if (!seenTs.Add(ts)) continue;
+                int span = Mathf.Max(1, te - ts + 1);
+                var block = new VisualElement();
+                block.AddToClassList("sched-class-block");
+                block.AddToClassList(cls.class_code == "Coi thi"
+                    ? "sched-class-block--exam" : "sched-class-block--regular");
+                block.style.position = Position.Absolute;
+                block.style.top    = new StyleLength(2f);
+                block.style.bottom = new StyleLength(2f);
+                block.style.left   = new StyleLength(0f);
+                block.style.width  = new StyleLength(40f);
+                string cname = cls.class_name ?? "";
+                if (cname.Length > 20) cname = cname.Substring(0, 19) + "…";
+                var nameL = new Label(cname); nameL.AddToClassList("sched-class-name");
+                block.Add(nameL);
+                row.Add(block);
+                blockInfos.Add((block, ts, span));
+            }
+
+            if (blockInfos.Count > 0)
+            {
+                const float gutterPx = 90f;
+                const int   numCols  = 14;
+                var captured = blockInfos;
+                row.RegisterCallback<GeometryChangedEvent>(_ =>
+                {
+                    float rowW = row.resolvedStyle.width;
+                    if (rowW <= gutterPx + 10f) return;
+                    float cellW = (rowW - gutterPx) / numCols;
+                    foreach (var (ve, ts, span) in captured)
+                    {
+                        ve.style.left  = gutterPx + (ts - 1) * cellW + 1f;
+                        ve.style.width = span * cellW - 2f;
+                    }
+                });
+            }
+
+            return row;
+        }
+
+        // Lấy prefix tòa nhà từ roomId: "E2.404"→"E2", "C1.201"→"C1", "F308"→"F", "H201"→"H"
+        static string GetRoomPrefix(string roomId)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(roomId, @"^([A-Z]+\d+)\.");
+            if (m.Success) return m.Groups[1].Value;
+            m = System.Text.RegularExpressions.Regex.Match(roomId, @"^([A-Z]+)\d");
+            if (m.Success) return m.Groups[1].Value;
+            return roomId;
+        }
+
+        static string GetGroupLabel(string prefix) => prefix switch {
+            "A"    => "Khu A",
+            "B"    => "Khu B",
+            "C1"   => "Khu C — C1",
+            "C2"   => "Khu C — C2",
+            "C3"   => "Khu C — C3",
+            "C4"   => "Khu C — C4",
+            "C5"   => "Khu C — C5",
+            "D"    => "Khu D",
+            "E1"   => "Khu E — E1",
+            "E2"   => "Khu E — E2",
+            "F"    => "Khu F",
+            "G"    => "Khu G (Xưởng)",
+            "H"    => "Khu H",
+            "I"    => "Khu I",
+            "K"    => "Khu K",
+            "M"    => "Khu M",
+            "P"    => "PFIEV",
+            "S"    => "Khu S",
+            "S07"  => "Khu S — S07",
+            "S08"  => "Khu S — S08",
+            "GDTC" => "GDTC",
+            _      => $"Khu {prefix}",
+        };
+
+        static string TietStartStr(int tiet)
+        {
+            var starts = new[] {"","07:00","08:00","09:00","10:00","11:00","12:30","13:30","14:30","15:30","16:30","17:30","18:30","19:30","20:30"};
+            return tiet >= 1 && tiet <= 14 ? starts[tiet] : "";
         }
 
         List<ClassInfo> GetClassesForDay(string buildingId, int dutThu)
@@ -465,15 +732,19 @@ namespace DUT.UI
             return m.Success ? m.Groups[1].Value : "1-2";
         }
 
-        // Tính tiet range từ time_start/time_end của class (dùng khi không có encoding)
+        // Tính tiet range từ time_start/time_end (dùng khi room_id không có tiet= encoding)
         static (int start, int end) TietRangeFromClass(ClassInfo c)
         {
-            if (!TryParseTime(c.time_start, out int sh, out _)) return (1, 2);
-            if (!TryParseTime(c.time_end,   out int eh, out _)) return (1, 2);
-            // Tiết 1=7:00, 2=7:50... mỗi tiết 50 phút
-            int startTiet = Mathf.Max(1, (sh - 7) * 60 / 50 + 1);
-            int endTiet   = Mathf.Max(startTiet, (eh * 60 - 7 * 60) / 50);
-            return (startTiet, endTiet);
+            if (!TryParseTime(c.time_start, out int sh, out int sm)) return (1, 2);
+            if (!TryParseTime(c.time_end,   out int eh, out int em)) return (1, 2);
+            int startMin = sh * 60 + sm;
+            int endMin   = eh * 60 + em;
+            // Mốc giờ đúng của từng tiết (phút từ 00:00)
+            var tS = new[] {0, 420,480,540,600,660,750,810,870,930,990,1050,1110,1170,1230};
+            int ts = 1, te = 1;
+            for (int t = 1; t <= 14; t++) if (startMin >= tS[t] && startMin < tS[t] + 50) { ts = t; break; }
+            for (int t = 14; t >= 1; t--) if (endMin   >  tS[t]) { te = t; break; }
+            return (Mathf.Max(1, ts), Mathf.Max(ts, Mathf.Min(14, te)));
         }
 
         static void ParseTiet(string tiet, out int start, out int end)

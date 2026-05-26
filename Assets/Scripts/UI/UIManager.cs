@@ -18,6 +18,7 @@ namespace DUT.UI
 
         UIDocument      _doc;
         VisualElement   _root;
+        VisualElement   _leftPanelBody;
         PanelState      _state      = PanelState.NoSelection;
         string          _selectedId;
         int             _activeTab  = 0;
@@ -54,6 +55,7 @@ namespace DUT.UI
             yield return null;
             _root = _doc?.rootVisualElement;
             if (_root == null) yield break;
+            _leftPanelBody = _root.Q<VisualElement>("left-panel-body");
             BindNav();
             if (_state == PanelState.BuildingSelected && _selectedId != null)
                 BuildPanel_Building(_selectedId);
@@ -141,6 +143,7 @@ void BuildPanel_Overview()
     int tot = store?.AllBuildings?.Count ?? 0;
     int alertCount = AlertManager.Instance?.Alerts?.Count ?? 0;
 
+    BuildLeftPanel(occ, emp, upc, tot);
     UpdateTopbarKpi(occ, alertCount);
     UpdateMinistats(occ, emp, upc, tot);
 
@@ -196,11 +199,13 @@ void BuildPanel_Building(string id)
     if (info == null || live == null || _root == null) return;
 
     int occ = store?.CountByStatus(BuildingStatus.Occupied) ?? 0;
+    int emp = store?.CountByStatus(BuildingStatus.Empty)    ?? 0;
+    int upc = store?.CountByStatus(BuildingStatus.Upcoming) ?? 0;
     int tot = store?.AllBuildings?.Count ?? 0;
     int alertCount = AlertManager.Instance?.Alerts?.Count ?? 0;
+    BuildLeftPanel(occ, emp, upc, tot);
     UpdateTopbarKpi(occ, alertCount);
-    UpdateMinistats(occ, store?.CountByStatus(BuildingStatus.Empty) ?? 0,
-                         store?.CountByStatus(BuildingStatus.Upcoming) ?? 0, tot);
+    UpdateMinistats(occ, emp, upc, tot);
 
     // Header: building identity
     Show("building-header", true);
@@ -233,19 +238,31 @@ void BuildPanel_Building(string id)
         banner.Q<Label>(className:"status-desc")?.SetText(desc);
     }
 
-    // Body: compact building card + campus overview below
     var body = _root.Q<VisualElement>("sidebar-body");
     if (body == null) return;
     body.Clear();
 
-    // Compact building detail card
-    body.Add(BuildSection_BuildingCard(info, live));
+    // ── 3-tab bar ────────────────────────────────────────────────────
+    var tabBar = new VisualElement(); tabBar.AddToClassList("bld-tab-bar");
+    var tabLabels = new[] { "📚 Lịch học", "🚪 Phòng", "⚡ Hạ tầng" };
+    for (int i = 0; i < 3; i++) {
+        int idx = i; string capturedId = id;
+        var btn = new Button(() => { _activeTab = idx; BuildPanel_Building(capturedId); });
+        btn.text = tabLabels[i]; btn.AddToClassList("bld-tab-btn");
+        if (i == _activeTab) btn.AddToClassList("bld-tab-btn--active");
+        tabBar.Add(btn);
+    }
+    body.Add(tabBar);
 
-    // Campus overview remains visible
-    body.Add(BuildSection_KhuBreakdown());
-    body.Add(BuildSection_AlertSummary());
+    // ── Tab content ───────────────────────────────────────────────────
+    VisualElement tabContent = _activeTab switch {
+        1 => Tab_RoomList(info, live),
+        2 => Tab_Infrastructure(live),
+        _ => Tab_Schedule(info, live),
+    };
+    body.Add(tabContent);
 
-    // Deselect button
+    // ── Back button ───────────────────────────────────────────────────
     var back = new Button(()=>store.ClearSelection()){text="← Bỏ chọn tòa nhà"};
     back.style.marginLeft=back.style.marginRight=12; back.style.marginBottom=12; back.style.marginTop=8;
     back.style.height=30; back.style.fontSize=11; back.style.color=new StyleColor(C_MUTED);
@@ -544,6 +561,294 @@ VisualElement BuildSection_KpiCards(int occ, int emp, int upc, int tot)
     sec.Add(row); return sec;
 }
 
+
+// ── Left Panel ──────────────────────────────────────────────────────────
+void BuildLeftPanel(int occ, int emp, int upc, int tot)
+{
+    if (_leftPanelBody == null) return;
+    _leftPanelBody.Clear();
+
+    int nowMin = DUTTime.Now.Hour * 60 + DUTTime.Now.Minute;
+    int totalRooms = 0, roomsOcc = 0, studentsNow = 0;
+    float sumTemp = 0f; int tempCount = 0;
+    int acAct = 0, acTot = 0, equipErr = 0, evCount = 0, maintCount = 0;
+
+    if (store?.AllBuildings != null)
+        foreach (var b in store.AllBuildings) {
+            totalRooms += b.so_phong;
+            var lv = store.GetLiveData(b.building_id); if (lv == null) continue;
+            var on = GetClassesByTime(lv, nowMin, true);
+            roomsOcc    += on.Count;
+            studentsNow += on.Sum(c => c.student_count);
+            float t = lv.infrastructure.climate.temperature_c;
+            if (t > 0) { sumTemp += t; tempCount++; }
+            acAct   += lv.infrastructure.climate.ac_active;
+            acTot   += lv.infrastructure.climate.ac_total;
+            equipErr += lv.equipment.error_devices;
+            if (lv.events?.Count > 0) evCount++;
+            if (lv.maintenance.has_active_work) maintCount++;
+        }
+
+    float avgTemp   = tempCount > 0 ? sumTemp / tempCount : 0f;
+    int roomsEmpty  = Mathf.Max(0, totalRooms - roomsOcc);
+    int roomPct     = totalRooms > 0 ? Mathf.Clamp(roomsOcc * 100 / totalRooms, 0, 100) : 0;
+
+    _leftPanelBody.Add(BuildLP_OccupancyRing(roomsOcc, roomsEmpty, roomPct, totalRooms));
+    _leftPanelBody.Add(BuildLP_StudentFlow(studentsNow));
+    _leftPanelBody.Add(BuildLP_HourlyBars());
+    _leftPanelBody.Add(BuildLP_PowerCard());
+    _leftPanelBody.Add(BuildLP_QuickStats(avgTemp, acAct, acTot, equipErr, evCount, maintCount));
+}
+
+VisualElement LpCard(string title, out VisualElement body)
+{
+    var card = new VisualElement(); card.AddToClassList("lp-card");
+    var t = new Label(title); t.AddToClassList("lp-card__title"); card.Add(t);
+    body = new VisualElement(); body.AddToClassList("lp-card__body"); card.Add(body);
+    return card;
+}
+
+VisualElement BuildLP_OccupancyRing(int roomsOcc, int roomsEmpty, int roomPct, int totalRooms)
+{
+    var card = LpCard("PHÒNG ĐANG CÓ LỚP", out var body);
+    var wrap = new VisualElement(); wrap.AddToClassList("lp-ring-wrap");
+
+    var ring = new VisualElement(); ring.AddToClassList("lp-ring");
+    Color rc = roomPct > 60 ? C_OCCUPIED : roomPct > 30 ? C_UPCOMING : C_BLUE;
+    ring.style.borderTopColor = ring.style.borderBottomColor =
+    ring.style.borderLeftColor = ring.style.borderRightColor = new StyleColor(rc);
+    var pctLbl = new Label($"{roomPct}%"); pctLbl.AddToClassList("lp-ring__pct"); ring.Add(pctLbl);
+    wrap.Add(ring);
+
+    var right = new VisualElement(); right.style.flexGrow = 1;
+    var bigNum = Lbl(roomsOcc.ToString(), 28, C_BLUE, true);
+    right.Add(bigNum);
+    right.Add(Lbl($"/ {totalRooms} phòng  ·  {roomsEmpty} trống", 9, C_DIM));
+    wrap.Add(right); body.Add(wrap);
+    return card;
+}
+
+VisualElement BuildLP_StudentFlow(int studentsNow)
+{
+    Color accentCol = studentsNow > 500 ? C_OCCUPIED : studentsNow > 200 ? C_UPCOMING : C_BLUE;
+    var card = LpCard("LƯU LƯỢNG SINH VIÊN", out var body);
+
+    // Big number header
+    var hdr = new VisualElement(); hdr.style.flexDirection = FlexDirection.Row;
+    hdr.style.alignItems = Align.FlexEnd; hdr.style.marginBottom = 5;
+    var bigNum = Lbl(studentsNow.ToString(), 26, accentCol, true);
+    hdr.Add(bigNum);
+    var sub = Lbl("  SV hiện tại", 9, C_DIM); sub.style.marginBottom = 2; hdr.Add(sub);
+    body.Add(hdr);
+
+    // Hourly student count bars (07h-21h)
+    int nowMin = DUTTime.Now.Hour * 60 + DUTTime.Now.Minute;
+    int dayStart = 7 * 60, slots = 14; int maxSt = 1;
+    var stCounts = new int[slots];
+    if (store?.AllBuildings != null)
+        for (int i = 0; i < slots; i++) {
+            int ss = dayStart + i * 60, se = ss + 60;
+            foreach (var b in store.AllBuildings) {
+                var lv = store.GetLiveData(b.building_id);
+                if (lv?.schedule.today_classes == null) continue;
+                foreach (var cls in lv.schedule.today_classes) {
+                    if (!TryParseTime(cls.time_start, out int sh, out int sm)) continue;
+                    if (!TryParseTime(cls.time_end,   out int eh, out int em)) continue;
+                    if (sh*60+sm < se && eh*60+em > ss) stCounts[i] += cls.student_count;
+                }
+            }
+            if (stCounts[i] > maxSt) maxSt = stCounts[i];
+        }
+
+    var chart = new VisualElement(); chart.AddToClassList("lp-chart");
+    for (int i = 0; i < slots; i++) {
+        int ss = dayStart + i * 60;
+        bool cur  = nowMin >= ss && nowMin < ss + 60;
+        bool past = nowMin >= ss + 60;
+        int barH = Mathf.Max(3, Mathf.RoundToInt((float)stCounts[i] / maxSt * 48));
+        var bar = new VisualElement(); bar.AddToClassList("lp-bar");
+        Color bc = cur ? C_BLUE : past ? new Color(0.18f, 0.56f, 0.91f, 0.55f) : new Color(0.10f, 0.27f, 0.51f, 0.55f);
+        bar.style.backgroundColor = new StyleColor(bc);
+        bar.style.height = barH; chart.Add(bar);
+    }
+    body.Add(chart);
+    var lblRow = new VisualElement(); lblRow.AddToClassList("lp-chart-labels");
+    foreach (var t in new[] { "7h", "10h", "13h", "16h", "19h", "21h" })
+    { var l = new Label(t); l.AddToClassList("lp-chart-label"); lblRow.Add(l); }
+    body.Add(lblRow);
+    return card;
+}
+
+VisualElement BuildLP_HourlyBars()
+{
+    var card = LpCard("PHÒNG CÓ LỚP THEO GIỜ", out var body);
+    int nowMin = DUTTime.Now.Hour * 60 + DUTTime.Now.Minute;
+    int dayStart = 7 * 60, slots = 14; // 07h-21h, 1h each
+    int maxCount = 1;
+    var counts = new int[slots];
+
+    if (store?.AllBuildings != null)
+        for (int i = 0; i < slots; i++) {
+            int ss = dayStart + i * 60, se = ss + 60;
+            foreach (var b in store.AllBuildings) {
+                var lv = store.GetLiveData(b.building_id);
+                if (lv?.schedule.today_classes == null) continue;
+                foreach (var cls in lv.schedule.today_classes) {
+                    if (!TryParseTime(cls.time_start, out int sh, out int sm)) continue;
+                    if (!TryParseTime(cls.time_end,   out int eh, out int em)) continue;
+                    if (sh*60+sm < se && eh*60+em > ss) { counts[i]++; break; }
+                }
+            }
+            if (counts[i] > maxCount) maxCount = counts[i];
+        }
+
+    var chart = new VisualElement(); chart.AddToClassList("lp-chart");
+    for (int i = 0; i < slots; i++) {
+        int ss = dayStart + i * 60;
+        bool cur = nowMin >= ss && nowMin < ss + 60;
+        float ratio = (float)counts[i] / maxCount;
+        int barH = Mathf.Max(3, Mathf.RoundToInt(ratio * 48));
+        var bar = new VisualElement(); bar.AddToClassList("lp-bar");
+        Color bc = cur                ? C_BLUE
+                 : ratio > 0.6f       ? new Color(0.94f, 0.27f, 0.27f, 0.85f)
+                 : counts[i] > 0      ? new Color(0.96f, 0.62f, 0.04f, 0.65f)
+                 :                      new Color(0.12f, 0.20f, 0.27f, 0.45f);
+        bar.style.backgroundColor = new StyleColor(bc);
+        bar.style.height = barH; chart.Add(bar);
+    }
+    body.Add(chart);
+
+    var lblRow = new VisualElement(); lblRow.AddToClassList("lp-chart-labels");
+    foreach (var t in new[] { "7h", "10h", "13h", "16h", "19h", "21h" })
+    { var l = new Label(t); l.AddToClassList("lp-chart-label"); lblRow.Add(l); }
+    body.Add(lblRow);
+
+    // Color legend
+    var lgnd = new VisualElement(); lgnd.style.flexDirection = FlexDirection.Row;
+    lgnd.style.marginTop = 5; lgnd.style.flexWrap = Wrap.Wrap;
+    void LItem(Color c, string lbl) {
+        var item = new VisualElement(); item.style.flexDirection = FlexDirection.Row;
+        item.style.alignItems = Align.Center; item.style.marginRight = 8;
+        var dot = new VisualElement(); dot.style.width = 7; dot.style.height = 7;
+        dot.style.borderTopLeftRadius = dot.style.borderTopRightRadius = 1;
+        dot.style.borderBottomLeftRadius = dot.style.borderBottomRightRadius = 1;
+        dot.style.backgroundColor = new StyleColor(c); dot.style.marginRight = 3;
+        item.Add(dot); item.Add(Lbl(lbl, 8, C_DIM)); lgnd.Add(item);
+    }
+    LItem(new Color(0.94f, 0.27f, 0.27f), "Cao điểm");
+    LItem(new Color(0.96f, 0.62f, 0.04f), "Bình thường");
+    LItem(C_BLUE, "Hiện tại");
+    body.Add(lgnd);
+    return card;
+}
+
+VisualElement BuildLP_PowerCard()
+{
+    var card = LpCard("TIÊU THỤ ĐIỆN", out var body);
+    float totalKw = 0f, totalAvg = 0f; int abnormal = 0;
+    if (store?.AllBuildings != null)
+        foreach (var b in store.AllBuildings) {
+            var lv = store.GetLiveData(b.building_id); if (lv == null) continue;
+            totalKw  += lv.infrastructure.electric.current_kw;
+            totalAvg += lv.infrastructure.electric.avg_kw;
+            if (lv.infrastructure.electric.is_abnormal) abnormal++;
+        }
+    Color pwCol = abnormal > 0 ? C_UPCOMING : C_EMPTY;
+    body.Add(Lbl($"{totalKw:F0} kW", 22, pwCol, true));
+    string subTxt = abnormal > 0 ? $"⚠ {abnormal} bất thường  ·  TB {totalAvg:F0} kW"
+                                 : $"✓ Bình thường  ·  TB {totalAvg:F0} kW";
+    body.Add(Lbl(subTxt, 10, C_DIM));
+    if (totalAvg > 0)
+        body.Add(ProgressBar(Mathf.Clamp01(totalKw / (totalAvg * 1.5f)), pwCol));
+    return card;
+}
+
+VisualElement BuildLP_QuickStats(float avgTemp, int acAct, int acTot, int equipErr, int evCount, int maintCount)
+{
+    var card = LpCard("THỐNG KÊ TỨC THỜI", out var body);
+    void SRow(string icon, string label, string val, bool bad = false) {
+        var row = new VisualElement(); row.style.flexDirection = FlexDirection.Row;
+        row.style.alignItems = Align.Center; row.style.justifyContent = Justify.SpaceBetween;
+        row.style.paddingTop = row.style.paddingBottom = 5;
+        row.style.borderBottomWidth = 1;
+        row.style.borderBottomColor = new StyleColor(new Color(0.10f, 0.19f, 0.31f, 0.6f));
+        var left = new VisualElement(); left.style.flexDirection = FlexDirection.Row;
+        left.style.alignItems = Align.Center;
+        var ic = new Label(icon); ic.style.fontSize = 12; ic.style.marginRight = 6; left.Add(ic);
+        left.Add(Lbl(label, 10, C_MUTED));
+        row.Add(left);
+        row.Add(Lbl(val, 12, bad ? C_OCCUPIED : C_BLUE, true));
+        body.Add(row);
+    }
+    SRow("🌡", "Nhiệt độ TB",     avgTemp > 0 ? $"{avgTemp:F1}°C" : "—", avgTemp > 32f);
+    SRow("❄", "Điều hòa",         acTot > 0 ? $"{acAct} / {acTot}" : "—", acTot > 0 && acAct < acTot * 0.6f);
+    SRow("🖥", "Thiết bị lỗi",    equipErr.ToString(), equipErr > 0);
+    SRow("📅", "Sự kiện hôm nay", evCount.ToString());
+    SRow("🔧", "Đang bảo trì",    maintCount.ToString(), maintCount > 0);
+    return card;
+}
+
+// ── Room List Tab ────────────────────────────────────────────────────────
+VisualElement Tab_RoomList(BuildingInfo info, BuildingLiveData live)
+{
+    var root = new VisualElement();
+    int nowMin = DUTTime.Now.Hour * 60 + DUTTime.Now.Minute;
+    var all = live.schedule.today_classes ?? new List<ClassInfo>();
+    var roomMap = new Dictionary<string, (string className, BuildingStatus status)>();
+
+    foreach (var cls in all) {
+        string rid = ExtractPhong(cls.room_id); if (string.IsNullOrEmpty(rid)) continue;
+        if (!TryParseTime(cls.time_start, out int sh, out int sm)) continue;
+        if (!TryParseTime(cls.time_end,   out int eh, out int em)) continue;
+        int s = sh*60+sm, e = eh*60+em;
+        BuildingStatus st = nowMin>=s&&nowMin<e ? BuildingStatus.Occupied
+                          : s>nowMin&&s-nowMin<=90 ? BuildingStatus.Upcoming
+                          : BuildingStatus.Empty;
+        if (!roomMap.ContainsKey(rid) || (int)st > (int)roomMap[rid].status)
+            roomMap[rid] = (cls.class_name, st);
+    }
+
+    if (roomMap.Count == 0) {
+        var empty = new VisualElement(); empty.AddToClassList("section");
+        empty.Add(Lbl("Không có dữ liệu phòng hôm nay", 11, C_DIM)); root.Add(empty);
+        return root;
+    }
+
+    var byFloor = roomMap.GroupBy(kv => ExtractFloor(kv.Key)).OrderBy(g => g.Key).ToList();
+    foreach (var group in byFloor) {
+        var hdr = new VisualElement(); hdr.AddToClassList("room-floor-header");
+        var fl = new Label(group.Key > 0 ? $"TẦNG {group.Key}" : "PHÒNG"); fl.AddToClassList("room-floor-label"); hdr.Add(fl);
+        var cnt = new Label($"{group.Count()} phòng"); cnt.style.fontSize = 9; cnt.style.color = new StyleColor(C_DIM); hdr.Add(cnt);
+        root.Add(hdr);
+
+        foreach (var kv in group.OrderBy(x => x.Key)) {
+            var (className, st) = kv.Value;
+            Color dc = st==BuildingStatus.Occupied?C_OCCUPIED:st==BuildingStatus.Upcoming?C_UPCOMING:C_EMPTY;
+            var row = new VisualElement(); row.AddToClassList("room-card");
+            var idLbl = new Label(kv.Key); idLbl.AddToClassList("room-card__id"); row.Add(idLbl);
+            var inf = new VisualElement(); inf.AddToClassList("room-card__info");
+            if (st != BuildingStatus.Empty) {
+                var nm = new Label(className); nm.AddToClassList("room-card__name"); inf.Add(nm);
+                var sub = new Label(st==BuildingStatus.Occupied?"Đang có lớp":"Sắp có lớp");
+                sub.AddToClassList("room-card__sub"); sub.style.color = new StyleColor(dc); inf.Add(sub);
+            } else {
+                var sub = new Label("Phòng trống"); sub.AddToClassList("room-card__sub"); inf.Add(sub);
+            }
+            row.Add(inf);
+            var dot = new VisualElement(); dot.AddToClassList("room-card__dot");
+            dot.style.backgroundColor = new StyleColor(dc); row.Add(dot);
+            root.Add(row);
+        }
+    }
+    return root;
+}
+
+static int ExtractFloor(string roomId)
+{
+    if (string.IsNullOrEmpty(roomId)) return 0;
+    var m = System.Text.RegularExpressions.Regex.Match(roomId, @"[A-Za-z]+(\d)");
+    return m.Success ? int.Parse(m.Groups[1].Value) : 0;
+}
 
 void UpdateTopbarKpi(int occ, int alertCount)
 {

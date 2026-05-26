@@ -74,6 +74,6 @@ namespace DUT.Data
             return list;
         }
 
-        void OnEnable() => _liveData = new Dictionary<string, BuildingLiveData>();
+        void OnEnable() => _liveData ??= new Dictionary<string, BuildingLiveData>();
     }
 }

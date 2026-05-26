@@ -1125,6 +1125,13 @@
 }
 
 
+.sched-col-name {
+    font-size: 11px;
+    color: rgb(232, 240, 248);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
 .sched-col-khu {
     font-size: 9px;
     color: rgb(61, 88, 112);
@@ -1375,4 +1382,978 @@ Button { cursor: default; }
     color: rgb(232, 240, 248);
     flex-grow: 1;
     white-space: normal;
+}
+
+
+/* ══════════════════════════════════════
+   LEFT PANEL (264px metrics column)
+══════════════════════════════════════ */
+
+.left-panel {
+    width: 264px;
+    background-color: rgb(3, 8, 18);
+    border-right-width: 1px;
+    border-right-color: rgba(46, 143, 232, 0.22);
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.left-panel__scroll {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.left-panel__body {
+    flex-direction: column;
+    padding-top: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 10px;
+}
+
+/* LP Cards */
+.lp-card {
+    background-color: rgba(5, 14, 30, 0.96);
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.25);
+    border-radius: 6px;
+    margin-bottom: 7px;
+}
+
+.lp-card__title {
+    font-size: 8px;
+    color: rgb(61, 88, 112);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    padding-top: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 4px;
+}
+
+.lp-card__body {
+    padding-top: 6px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 10px;
+}
+
+/* Occupancy ring card */
+.lp-ring-wrap {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lp-ring {
+    width: 68px;
+    height: 68px;
+    border-radius: 34px;
+    border-width: 8px;
+    border-color: rgb(46, 143, 232);
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.lp-ring__pct {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: rgb(232, 240, 248);
+    -unity-text-align: middle-center;
+}
+
+.lp-ring__legend {
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.lp-ring__row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 5px;
+    height: 16px;
+}
+
+.lp-ring__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.lp-ring__label {
+    font-size: 10px;
+    color: rgb(122, 154, 184);
+    flex-grow: 1;
+}
+
+.lp-ring__val {
+    font-size: 10px;
+    color: rgb(232, 240, 248);
+    -unity-font-style: bold;
+}
+
+/* Hourly bar chart */
+.lp-chart {
+    flex-direction: row;
+    align-items: flex-end;
+    height: 52px;
+    margin-top: 4px;
+}
+
+.lp-bar {
+    flex-grow: 1;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    margin-left: 1px;
+    margin-right: 1px;
+    min-height: 3px;
+    background-color: rgb(26, 70, 130);
+}
+
+.lp-bar--current {
+    background-color: rgb(46, 143, 232);
+}
+
+.lp-chart-labels {
+    flex-direction: row;
+    margin-top: 3px;
+    justify-content: space-between;
+}
+
+.lp-chart-label {
+    font-size: 8px;
+    color: rgb(61, 88, 112);
+}
+
+/* Quick stats rows */
+.lp-stat-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(26, 48, 80, 0.6);
+}
+
+.lp-stat__key {
+    font-size: 10px;
+    color: rgb(61, 88, 112);
+}
+
+.lp-stat__val {
+    font-size: 11px;
+    color: rgb(232, 240, 248);
+    -unity-font-style: bold;
+}
+
+
+/* ══════════════════════════════════════
+   BUILDING DETAIL TABS (sidebar)
+══════════════════════════════════════ */
+
+.bld-tab-bar {
+    flex-direction: row;
+    background-color: rgb(8, 16, 26);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(26, 48, 80);
+    flex-shrink: 0;
+    height: 38px;
+}
+
+.bld-tab-btn {
+    flex-grow: 1;
+    font-size: 11px;
+    color: rgb(61, 88, 112);
+    -unity-text-align: middle-center;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+}
+
+.bld-tab-btn--active {
+    color: rgb(46, 143, 232);
+    border-bottom-color: rgb(46, 143, 232);
+    -unity-font-style: bold;
+}
+
+.bld-tab-btn:hover {
+    color: rgb(122, 154, 184);
+    background-color: rgba(26, 48, 80, 0.3);
+}
+
+
+/* ══════════════════════════════════════
+   ROOM LIST (building tab 1)
+══════════════════════════════════════ */
+
+.room-floor-header {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.room-floor-label {
+    font-size: 9px;
+    color: rgb(61, 88, 112);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    flex-grow: 1;
+}
+
+.room-card {
+    flex-direction: row;
+    align-items: center;
+    padding-left: 16px;
+    padding-right: 14px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(26, 48, 80, 0.5);
+}
+
+.room-card:hover {
+    background-color: rgba(26, 48, 80, 0.3);
+}
+
+.room-card__id {
+    width: 42px;
+    font-size: 12px;
+    color: rgb(46, 143, 232);
+    -unity-font-style: bold;
+    flex-shrink: 0;
+}
+
+.room-card__info {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.room-card__name {
+    font-size: 11px;
+    color: rgb(232, 240, 248);
+    white-space: normal;
+}
+
+.room-card__sub {
+    font-size: 10px;
+    color: rgb(61, 88, 112);
+}
+
+.room-card__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+
+/* ══════════════════════════════════════
+   DASHBOARD v2 — 6-KPI + left/center/right
+══════════════════════════════════════ */
+
+.dash-kpi-row {
+    flex-direction: row;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    background-color: rgba(5, 14, 30, 0.6);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(46, 143, 232, 0.15);
+    flex-shrink: 0;
+}
+
+.dash-kpi-card {
+    flex-grow: 1;
+    background-color: rgba(5, 14, 30, 0.96);
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.22);
+    border-radius: 9px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-right: 8px;
+}
+
+.dash-kpi-card__label {
+    font-size: 9px;
+    color: rgb(61, 88, 112);
+    margin-bottom: 4px;
+}
+
+.dash-kpi-card__num {
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-bottom: 3px;
+}
+
+.dash-kpi-card__sub {
+    font-size: 9px;
+    color: rgb(100, 130, 160);
+}
+
+.dash-kpi--occupied { color: rgb(239, 68, 68); }
+.dash-kpi--empty    { color: rgb(34, 197, 94); }
+.dash-kpi--blue     { color: rgb(46, 143, 232); }
+.dash-kpi--upcoming { color: rgb(245, 158, 11); }
+.dash-kpi--purple   { color: rgb(168, 85, 247); }
+.dash-kpi--ok       { color: rgb(34, 197, 94); }
+.dash-kpi--alert    { color: rgb(239, 68, 68); }
+
+.dash-body {
+    flex-grow: 1;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.dash-left {
+    width: 260px;
+    border-right-width: 1px;
+    border-right-color: rgba(46, 143, 232, 0.18);
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
+    background-color: rgba(5, 14, 30, 0.4);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Override old dash-center for new layout */
+.dash-center {
+    flex-grow: 1;
+    flex-direction: column;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 16px;
+    padding-right: 16px;
+    overflow: hidden;
+}
+
+.dash-right-panel {
+    width: 210px;
+    border-left-width: 1px;
+    border-left-color: rgba(46, 143, 232, 0.18);
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
+    background-color: rgba(5, 14, 30, 0.4);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.dash-section-title {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(61, 88, 112);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.dash-divider {
+    height: 1px;
+    background-color: rgba(46, 143, 232, 0.15);
+    margin-top: 10px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+/* Zone breakdown */
+.dash-zone-list { flex-direction: column; }
+.dash-zone-row  { margin-bottom: 8px; flex-shrink: 0; }
+
+.dash-zone-header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+.dash-zone-name {
+    font-size: 11px;
+    color: rgb(180, 210, 240);
+    -unity-font-style: bold;
+}
+
+.dash-zone-count { font-size: 10px; color: rgb(61, 88, 112); }
+.dash-zone-count--active { color: rgb(239, 68, 68); }
+
+.dash-bar-track {
+    height: 6px;
+    background-color: rgba(22, 38, 56, 0.9);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.dash-bar-fill { height: 6px; border-radius: 3px; }
+.dash-bar-fill--peak { background-color: rgb(239, 68, 68); }
+.dash-bar-fill--mid  { background-color: rgb(245, 158, 11); }
+.dash-bar-fill--low  { background-color: rgb(46, 143, 232); }
+
+.dash-zone-pct { font-size: 8px; color: rgb(61, 88, 112); }
+
+/* Class type list */
+.dash-classtype-list { flex-direction: column; }
+.dash-classtype-row  { margin-bottom: 8px; flex-shrink: 0; }
+
+.dash-classtype-header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+.dash-classtype-name { font-size: 11px; color: rgb(180, 210, 240); }
+.dash-classtype-count { font-size: 10px; -unity-font-style: bold; }
+.dash-classtype-count--exam { color: rgb(245, 158, 11); }
+.dash-classtype-count--bu   { color: rgb(34, 197, 94); }
+
+/* Hourly chart (14 bars) */
+.dash-hourly-chart {
+    flex-direction: row;
+    height: 120px;
+    align-items: flex-end;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.dash-hourly-col {
+    flex-grow: 1;
+    align-items: center;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.dash-hourly-bar {
+    width: 80%;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    background-color: rgba(30, 50, 70, 0.5);
+    min-height: 2px;
+}
+
+.dash-hourly-bar--peak   { background-color: rgba(239, 68, 68, 0.8); }
+.dash-hourly-bar--normal { background-color: rgba(245, 158, 11, 0.6); }
+.dash-hourly-bar--now    { background-color: rgb(46, 143, 232); }
+
+.dash-hourly-label {
+    font-size: 7px;
+    color: rgb(61, 88, 112);
+    margin-top: 3px;
+    -unity-text-align: middle-center;
+}
+
+.dash-hourly-label--now { color: rgb(46, 143, 232); }
+
+/* Chart legend row */
+.dash-chart-legend {
+    flex-direction: row;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.dash-legend-item {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 14px;
+}
+
+.dash-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 5px;
+}
+
+.dash-legend-dot--peak   { background-color: rgba(239, 68, 68, 0.8); }
+.dash-legend-dot--normal { background-color: rgba(245, 158, 11, 0.6); }
+.dash-legend-dot--now    { background-color: rgb(46, 143, 232); }
+.dash-legend-text { font-size: 9px; color: rgb(61, 88, 112); }
+
+/* Alert table */
+.dash-alert-section { flex-direction: column; flex-shrink: 0; }
+
+.dash-alert-title {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(61, 88, 112);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.dash-alert-box {
+    background-color: rgba(5, 14, 30, 0.96);
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dash-alert-row {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(26, 48, 80, 0.3);
+}
+
+.dash-alert-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.dash-alert-dot--critical { background-color: rgb(239, 68, 68); }
+.dash-alert-dot--warning  { background-color: rgb(245, 158, 11); }
+
+.dash-alert-msg { flex-grow: 1; font-size: 11px; color: rgb(220, 235, 250); }
+
+.dash-alert-sev { font-size: 10px; -unity-font-style: bold; flex-shrink: 0; margin-left: 8px; }
+.dash-alert-sev--critical { color: rgb(239, 68, 68); }
+.dash-alert-sev--warning  { color: rgb(245, 158, 11); }
+
+/* Heatmap (right panel) */
+.dash-heatmap { flex-direction: column; margin-bottom: 4px; }
+
+.dash-hm-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.dash-hm-zone {
+    width: 22px;
+    font-size: 9px;
+    color: rgb(61, 88, 112);
+    flex-shrink: 0;
+}
+
+.dash-hm-cell {
+    flex-grow: 1;
+    height: 14px;
+    border-radius: 2px;
+    margin-right: 2px;
+}
+
+.dash-hm-cell--now {
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.8);
+}
+
+.dash-heatmap-xlabels {
+    flex-direction: row;
+    margin-bottom: 4px;
+    margin-left: 22px;
+    flex-shrink: 0;
+}
+
+.dash-heatmap-xlabel {
+    flex-grow: 1;
+    font-size: 7px;
+    color: rgb(61, 88, 112);
+    -unity-text-align: middle-center;
+}
+
+.dash-hm-scale { flex-direction: row; height: 10px; flex-shrink: 0; }
+
+.dash-hm-scale-cell {
+    flex-grow: 1;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 2px;
+}
+
+
+/* ══════════════════════════════════════
+   SCHEDULE v2 — Room × Tiết grid
+══════════════════════════════════════ */
+
+.sched-header-bar {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
+    background-color: rgba(5, 14, 30, 0.96);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(46, 143, 232, 0.22);
+    flex-shrink: 0;
+}
+
+.sched-thu-row { flex-direction: row; flex-shrink: 0; }
+
+.sched-thu-btn {
+    height: 28px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 5px;
+    margin-right: 4px;
+    font-size: 11px;
+    background-color: rgba(10, 20, 40, 0.6);
+    border-width: 1px;
+    border-color: rgba(26, 48, 80, 0.6);
+    color: rgb(122, 154, 184);
+    cursor: default;
+    justify-content: center;
+    align-items: center;
+}
+
+.sched-thu-btn--active {
+    background-color: rgba(26, 58, 100, 0.9);
+    border-color: rgba(46, 143, 232, 0.7);
+    color: rgb(46, 143, 232);
+    -unity-font-style: bold;
+}
+
+.sched-thu-btn:hover {
+    background-color: rgba(22, 38, 56, 0.8);
+    color: rgb(232, 240, 248);
+}
+
+.sched-stats-area {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.sched-stat-chip { align-items: center; margin-left: 16px; }
+
+.sched-stat-chip__num {
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.sched-stat-chip__label {
+    font-size: 9px;
+    color: rgb(61, 88, 112);
+    -unity-text-align: middle-center;
+}
+
+.sched-now-chip {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(46, 143, 232, 0.1);
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.3);
+    border-radius: 6px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 14px;
+}
+
+.sched-now-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgb(46, 143, 232);
+    margin-right: 6px;
+}
+
+.sched-now-label { font-size: 10px; color: rgb(46, 143, 232); -unity-font-style: bold; }
+
+/* Grid container */
+.sched-grid-outer {
+    flex-grow: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Static tiết header */
+/* padding-right matches Unity's default scrollbar width so columns align with body */
+.sched-tiet-header {
+    flex-direction: row;
+    flex-shrink: 0;
+    background-color: rgba(5, 10, 22, 0.98);
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(46, 143, 232, 0.3);
+    padding-right: 14px;
+}
+
+.sched-room-gutter {
+    width: 90px;
+    flex-shrink: 0;
+    background-color: rgba(5, 14, 30, 0.99);
+    border-right-width: 1px;
+    border-right-color: rgba(46, 143, 232, 0.2);
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    justify-content: center;
+}
+
+.sched-room-gutter-label {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(61, 88, 112);
+    letter-spacing: 1px;
+}
+
+.sched-tiet-col-header {
+    flex-grow: 1;
+    flex-shrink: 0;
+    min-width: 52px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-right-width: 1px;
+    border-right-color: rgba(26, 48, 80, 0.3);
+    align-items: center;
+}
+
+.sched-tiet-col-header--now { background-color: rgba(46, 143, 232, 0.12); }
+
+.sched-tiet-num {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(122, 154, 184);
+    -unity-text-align: middle-center;
+}
+
+.sched-tiet-num--now { color: rgb(46, 143, 232); }
+
+.sched-tiet-time {
+    font-size: 8px;
+    color: rgb(61, 88, 112);
+    -unity-text-align: middle-center;
+}
+
+/* Room rows scroll area */
+.sched-scroll { flex-grow: 1; }
+.sched-room-body { flex-direction: column; width: 100%; }
+
+.sched-room-row {
+    flex-direction: row;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(26, 48, 80, 0.35);
+    min-height: 50px;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.sched-room-label-cell {
+    width: 90px;
+    flex-shrink: 0;
+    border-right-width: 1px;
+    border-right-color: rgba(46, 143, 232, 0.2);
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background-color: rgba(5, 14, 30, 0.96);
+    justify-content: center;
+}
+
+.sched-room-id { font-size: 11px; -unity-font-style: bold; color: rgb(210, 230, 250); }
+.sched-room-cap { font-size: 8px; color: rgb(61, 88, 112); margin-top: 2px; }
+
+.sched-tiet-data-col {
+    flex-grow: 1;
+    flex-shrink: 0;
+    min-width: 52px;
+    border-right-width: 1px;
+    border-right-color: rgba(26, 48, 80, 0.2);
+    min-height: 44px;
+    position: relative;
+}
+
+.sched-tiet-data-col--now  { background-color: rgba(46, 143, 232, 0.04); }
+.sched-tiet-data-col--even { background-color: rgba(8, 18, 36, 0.3); }
+
+/* Class block — absolute child of the ROW (not the cell).
+   left/width are set by C# via GeometryChangedEvent so the block spans multiple tiets.
+   Only top/bottom and decorative properties here. */
+.sched-class-block {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    border-radius: 4px;
+    padding-left: 5px;
+    padding-right: 4px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Occupied continuation cell (tinted, no block) */
+.sched-tiet-data-col--occ {
+    background-color: rgba(34, 197, 94, 0.05);
+}
+
+.sched-class-block--regular {
+    background-color: rgba(34, 197, 94, 0.12);
+    border-width: 1px;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.sched-class-block--exam {
+    background-color: rgba(245, 158, 11, 0.18);
+    border-width: 1px;
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.sched-class-name {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(34, 197, 94);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.sched-class-name--exam { color: rgb(245, 158, 11); }
+
+.sched-class-sub {
+    font-size: 8px;
+    color: rgb(61, 88, 112);
+    overflow: hidden;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+/* Legend bar (bottom) */
+.sched-legend {
+    flex-direction: row;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-top-width: 1px;
+    border-top-color: rgba(26, 48, 80, 0.3);
+    background-color: rgba(5, 14, 30, 0.6);
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.sched-legend-label {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(61, 88, 112);
+    letter-spacing: 1px;
+    margin-right: 14px;
+}
+
+.sched-legend-item {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 14px;
+}
+
+.sched-legend-swatch {
+    width: 20px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 6px;
+}
+
+.sched-legend-swatch--regular {
+    background-color: rgba(34, 197, 94, 0.12);
+    border-width: 1px;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.sched-legend-swatch--exam {
+    background-color: rgba(245, 158, 11, 0.18);
+    border-width: 1px;
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.sched-legend-swatch--now {
+    background-color: rgba(46, 143, 232, 0.04);
+    border-width: 1px;
+    border-color: rgba(46, 143, 232, 0.3);
+}
+
+.sched-legend-text { font-size: 9px; color: rgb(61, 88, 112); }
+
+/* Schedule scrollbar dark theme */
+#sched-room-scroll .unity-scroll-view__vertical-scroller {
+    background-color: rgba(5, 10, 22, 0.8);
+    width: 14px;
+}
+
+#sched-room-scroll .unity-base-slider__tracker {
+    background-color: rgba(22, 38, 56, 0.5);
+    border-width: 0;
+}
+
+#sched-room-scroll .unity-base-slider__dragger {
+    background-color: rgba(46, 143, 232, 0.3);
+    border-radius: 3px;
+    border-width: 0;
+}
+
+#sched-room-scroll .unity-base-slider__dragger:hover {
+    background-color: rgba(46, 143, 232, 0.6);
+}
+
+#sched-room-scroll .unity-scroller--vertical > .unity-repeat-button {
+    display: none;
+}
+
+/* ── Group header (tên khu) ──────────────────────────────── */
+.sched-group-header {
+    flex-direction: row;
+    align-items: center;
+    height: 22px;
+    background-color: rgba(8, 18, 34, 0.95);
+    border-top-width: 1px;
+    border-top-color: rgba(46, 143, 232, 0.25);
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.sched-group-label {
+    color: rgb(46, 143, 232);
+    font-size: 10px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+}
+
+.sched-group-count {
+    font-size: 9px;
+    color: rgb(34, 197, 94);
+    background-color: rgba(34, 197, 94, 0.12);
+    border-radius: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+/* Phòng trống — mờ hơn để không che phòng có lớp */
+.sched-room-row--empty .sched-room-id {
+    color: rgba(61, 88, 112, 0.6);
+}
+
+.sched-room-row--empty .sched-tiet-data-col {
+    background-color: transparent;
 }

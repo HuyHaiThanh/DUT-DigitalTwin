@@ -77,9 +77,9 @@ namespace DUT.Core
                 _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
             }
 
-            // ── Zoom: scroll ──
+            // ── Zoom: scroll (chỉ khi chuột không nằm trong sidebar/topbar) ──
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.001f)
+            if (Mathf.Abs(scroll) > 0.001f && !OverSidebar())
                 _dist = Mathf.Clamp(_dist - scroll * _dist * 0.4f, minDist, maxDist);
 
             // ── Track LMB press ──

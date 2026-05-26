@@ -40,6 +40,15 @@
     <!-- MAIN CONTENT -->
     <ui:VisualElement name="main-content" class="main-content">
 
+      <!-- LEFT PANEL (metrics & charts) -->
+      <ui:VisualElement name="left-panel" class="left-panel">
+        <ui:ScrollView name="left-panel-scroll" class="left-panel__scroll"
+                       vertical-scroller-visibility="Hidden"
+                       horizontal-scroller-visibility="Hidden">
+          <ui:VisualElement name="left-panel-body" class="left-panel__body" />
+        </ui:ScrollView>
+      </ui:VisualElement>
+
       <!-- VIEWPORT (3D Canvas) -->
       <ui:VisualElement name="viewport" class="viewport">
         <!-- Search + zoom controls -->

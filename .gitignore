@@ -59,10 +59,9 @@ Assets/AI Toolkit/
 Assets/AI Toolkit.meta
 Assets/TutorialInfo/
 Assets/TutorialInfo.meta
-Assets/UI Toolkit/
-Assets/UI Toolkit.meta
 Assets/Readme.asset
 Assets/Readme.asset.meta
+# Assets/UI Toolkit/ — KHÔNG ignore: UnityDefaultRuntimeTheme.tss có GUID được scene tham chiếu
 
 # Debug / report / temp files
 Assets/DUT_*.txt

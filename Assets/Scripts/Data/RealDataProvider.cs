@@ -32,6 +32,8 @@ namespace DUT.Data
             public string loai;         // "Coi thi" | "Bù" | "Học"
             public string ten_mon;      // tên môn học
             public string giang_vien;   // tên giảng viên
+            public string ma_lhp;       // mã lớp học phần (từ PageLopHPKH)
+            public int    slsv;         // số lượng sinh viên đăng ký
         }
 
         // ─── Room → building_id lookup ────────────────────────────────
@@ -74,18 +76,21 @@ namespace DUT.Data
             { "F",  null },  // F1 = Hội trường, F2 = Khu F — dùng khu
         };
 
-        // ─── Tiet → giờ học ──────────────────────────────────────────
-        // Tiết 1=7:00, 2=7:50, 3=8:40... (mỗi tiết 50 phút)
+        // ─── Tiet → giờ bắt đầu (DUT schedule) ──────────────────────
+        // Sáng  (1-5):  7:00, 8:00, 9:00, 10:00, 11:00  (nghỉ 10 phút)
+        // Chiều (6-10): 12:30, 13:30, 14:30, 15:30, 16:30 (nghỉ ăn trưa 40 phút)
+        // Tối  (11-14): 17:30, 18:30, 19:30, 20:30
         static readonly Dictionary<int, (int h, int m)> TietToTime = new()
         {
-            {1,(7,0)}, {2,(7,50)}, {3,(8,40)}, {4,(9,30)}, {5,(10,20)},
-            {6,(11,10)},{7,(12,30)},{8,(13,20)},{9,(14,10)},{10,(15,0)},
-            {11,(15,50)},{12,(16,40)},{13,(17,30)},{14,(18,20)},
+            {1,(7,0)},  {2,(8,0)},  {3,(9,0)},  {4,(10,0)},  {5,(11,0)},
+            {6,(12,30)},{7,(13,30)},{8,(14,30)}, {9,(15,30)}, {10,(16,30)},
+            {11,(17,30)},{12,(18,30)},{13,(19,30)},{14,(20,30)},
         };
 
         // ─── Runtime state ───────────────────────────────────────────
         // building_id → list of classes today (filtered by current week)
         Dictionary<string, List<ClassInfo>> _buildingClasses = new();
+        bool _realDataLoaded = false; // chỉ true khi parse được ít nhất 1 entry
         static readonly System.Random _rng = new(42); // cho mock fallback
 
         // ─── Unity lifecycle ─────────────────────────────────────────
@@ -131,12 +136,19 @@ namespace DUT.Data
 
         void ParseJson(string json)
         {
-            _buildingClasses.Clear();
             ScheduleRoot root;
             try { root = JsonUtility.FromJson<ScheduleRoot>(json); }
             catch (Exception e) { Debug.LogError($"[RealData] Parse error: {e.Message}"); return; }
 
-            if (root?.data == null) return;
+            if (root?.data == null || root.data.Count == 0)
+            {
+                Debug.LogWarning("[RealData] schedule_data.json trống — giữ MockDataProvider data nguyên.");
+                _realDataLoaded = false;
+                return;
+            }
+
+            _realDataLoaded = true;
+            _buildingClasses.Clear();
 
             // Dedup: cùng (thu, tiet, phong) = 1 lớp/phòng thi, chỉ giữ 1 entry
             var seen = new HashSet<string>();
@@ -165,6 +177,7 @@ namespace DUT.Data
         // ─── Apply to BuildingDataStore ───────────────────────────────
         void ApplyToStore()
         {
+            if (!_realDataLoaded) return; // không có real data → giữ nguyên mock
             if (store?.AllBuildings == null) return;
 
             int now_h = DUT.UI.DUTTime.Now.Hour;
@@ -177,18 +190,13 @@ namespace DUT.Data
                 // Lấy live data hiện có (có thể đã có mock data)
                 var live = store.GetLiveData(info.building_id) ?? BuildMockLiveData(info);
 
-                // Lọc classes hôm nay cho building này
-                List<ClassInfo> todayClasses = new();
+                // Toàn bộ classes cả tuần (để Schedule screen filter theo ngày tùy chọn)
+                List<ClassInfo> weekClasses = new();
                 if (_buildingClasses.TryGetValue(info.building_id, out var all))
-                {
-                    foreach (var c in all)
-                    {
-                        // Chỉ lấy đúng thứ hôm nay
-                        // ClassInfo.room_id chứa "thu=X" encode
-                        if (ExtractThu(c.room_id) == dutToday)
-                            todayClasses.Add(c);
-                    }
-                }
+                    weekClasses.AddRange(all);
+
+                // Chỉ hôm nay → xác định trạng thái building
+                var todayClasses = weekClasses.FindAll(c => ExtractThu(c.room_id) == dutToday);
 
                 // Tìm current + next class
                 ClassInfo current = null, next = null;
@@ -204,8 +212,8 @@ namespace DUT.Data
                     }
                 }
 
-                // Ghi đè schedule bằng real data
-                live.schedule.today_classes = todayClasses;
+                // Ghi đè schedule — lưu toàn bộ tuần để Schedule screen dùng
+                live.schedule.today_classes = weekClasses;
                 live.schedule.current_class = current;
                 live.schedule.next_class    = next;
                 live.schedule.status =
@@ -305,7 +313,10 @@ string ResolveBuildingId(string phong)
         {
             ParseTiet(slot.tiet, out int startTiet, out int endTiet);
             GetTietTime(startTiet, out int sh, out int sm);
-            GetTietTime(endTiet + 1, out int eh, out int em);
+            // End = start of last tiet + 50 min (không dùng TietToTime[n+1] vì có khoảng nghỉ)
+            GetTietTime(endTiet, out int eh, out int em);
+            em += 50;
+            if (em >= 60) { eh += em / 60; em %= 60; }
 
             string label = !string.IsNullOrEmpty(slot.ten_mon) ? slot.ten_mon
                          : slot.loai == "Bù" ? $"Bù — {slot.phong}"
@@ -315,11 +326,11 @@ string ResolveBuildingId(string phong)
             {
                 class_name       = label,
                 class_code       = slot.loai ?? "Học",
-                group            = slot.loai ?? "Học",
+                group            = !string.IsNullOrEmpty(slot.ma_lhp) ? slot.ma_lhp : (slot.loai ?? "Học"),
                 lecturer         = slot.giang_vien ?? "",
                 time_start       = $"{sh:D2}:{sm:D2}",
                 time_end         = $"{eh:D2}:{em:D2}",
-                student_count    = 0,
+                student_count    = slot.slsv,
                 student_capacity = 45,
                 room_id          = $"thu={slot.thu};tiet={slot.tiet};phong={slot.phong}",
                 progress         = 0f,

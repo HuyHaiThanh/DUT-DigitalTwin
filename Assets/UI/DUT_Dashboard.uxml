@@ -2,7 +2,7 @@
   <ui:Style src="DUT_Main.uss" />
   <ui:VisualElement class="dashboard-root">
 
-    <!-- TOPBAR (shared) -->
+    <!-- TOPBAR -->
     <ui:VisualElement class="topbar">
       <ui:Label class="topbar__logo" text="Digital Twin — Bách Khoa ĐN" />
       <ui:VisualElement name="nav" class="topbar__nav">
@@ -17,311 +17,86 @@
       </ui:VisualElement>
     </ui:VisualElement>
 
-    <!-- BODY -->
-    <ui:VisualElement class="dashboard-body">
+    <!-- 6 KPI CHIPS -->
+    <ui:VisualElement class="dash-kpi-row">
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="Phòng có lớp" />
+        <ui:Label name="kpi-val-0" class="dash-kpi-card__num dash-kpi--occupied" text="—" />
+        <ui:Label name="kpi-sub-0" class="dash-kpi-card__sub" text="— tổng" />
+      </ui:VisualElement>
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="Phòng trống" />
+        <ui:Label name="kpi-val-1" class="dash-kpi-card__num dash-kpi--empty" text="—" />
+        <ui:Label name="kpi-sub-1" class="dash-kpi-card__sub" text="Sẵn sàng" />
+      </ui:VisualElement>
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="SV đang học" />
+        <ui:Label name="kpi-val-2" class="dash-kpi-card__num dash-kpi--blue" text="—" />
+        <ui:Label name="kpi-sub-2" class="dash-kpi-card__sub" text="Hiện tại" />
+      </ui:VisualElement>
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="Tòa hoạt động" />
+        <ui:Label name="kpi-val-3" class="dash-kpi-card__num dash-kpi--upcoming" text="—" />
+        <ui:Label name="kpi-sub-3" class="dash-kpi-card__sub" text="— sắp có" />
+      </ui:VisualElement>
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="Slots hôm nay" />
+        <ui:Label name="kpi-val-4" class="dash-kpi-card__num dash-kpi--purple" text="—" />
+        <ui:Label name="kpi-sub-4" class="dash-kpi-card__sub" text="Dữ liệu thực" />
+      </ui:VisualElement>
+      <ui:VisualElement class="dash-kpi-card">
+        <ui:Label class="dash-kpi-card__label" text="Cảnh báo" />
+        <ui:Label name="kpi-val-5" class="dash-kpi-card__num dash-kpi--ok" text="0" />
+        <ui:Label name="kpi-sub-5" class="dash-kpi-card__sub" text="OK" />
+      </ui:VisualElement>
+    </ui:VisualElement>
 
-      <!-- LEFT: Filter -->
-      <ui:VisualElement class="dash-filter">
-        <ui:Label class="dash-filter__title" text="THỜI GIAN" />
-        <ui:Button class="filter-date-btn filter-date-btn--active" text="Hôm nay" />
-        <ui:Button class="filter-date-btn" text="Tuần này" />
-        <ui:Button class="filter-date-btn" text="Tháng này" />
+    <!-- BODY: left | center | right -->
+    <ui:VisualElement class="dash-body">
 
-        <ui:VisualElement class="filter-divider" />
-
-        <ui:Label class="dash-filter__title" text="CHỨC NĂNG" />
-
-        <ui:VisualElement class="filter-item">
-          <ui:VisualElement class="filter-check filter-check--on" />
-          <ui:Label class="filter-label" text="Giảng đường" />
-        </ui:VisualElement>
-        <ui:VisualElement class="filter-item">
-          <ui:VisualElement class="filter-check filter-check--on" />
-          <ui:Label class="filter-label" text="Thí nghiệm" />
-        </ui:VisualElement>
-        <ui:VisualElement class="filter-item">
-          <ui:VisualElement class="filter-check filter-check--on" />
-          <ui:Label class="filter-label" text="Hành chính" />
-        </ui:VisualElement>
-        <ui:VisualElement class="filter-item">
-          <ui:VisualElement class="filter-check" />
-          <ui:Label class="filter-label" text="Tiện ích" />
-        </ui:VisualElement>
-
-        <ui:VisualElement class="filter-divider" />
-
-        <ui:Label class="dash-filter__title" text="KHU" />
-        <ui:VisualElement class="chips-row">
-          <ui:Button class="chip chip--active" text="Tất cả" />
-          <ui:Button class="chip" text="A" />
-          <ui:Button class="chip" text="B" />
-          <ui:Button class="chip" text="C" />
-          <ui:Button class="chip" text="D" />
-          <ui:Button class="chip" text="E" />
-          <ui:Button class="chip" text="F" />
-          <ui:Button class="chip" text="G" />
-          <ui:Button class="chip" text="I" />
-          <ui:Button class="chip" text="K" />
-        </ui:VisualElement>
+      <!-- LEFT: Zone breakdown + class type -->
+      <ui:VisualElement class="dash-left">
+        <ui:Label class="dash-section-title" text="PHÒNG THEO KHU" />
+        <ui:VisualElement name="dash-zone-list" class="dash-zone-list" />
+        <ui:VisualElement class="dash-divider" />
+        <ui:Label class="dash-section-title" text="THỐNG KÊ PHÒNG" />
+        <ui:VisualElement name="dash-classtype-list" class="dash-classtype-list" />
       </ui:VisualElement>
 
-      <!-- CENTER: Charts -->
+      <!-- CENTER: Hourly SV chart + alert table -->
       <ui:VisualElement class="dash-center">
-
-        <!-- Row 1: Stat cards -->
-        <ui:VisualElement class="dash-row">
-          <ui:VisualElement class="dash-stat-card">
-            <ui:Label class="dash-stat__label" text="TỔNG TÒA NHÀ" />
-            <ui:Label class="dash-stat__num dash-stat--blue" text="90" />
-            <ui:Label class="dash-stat__sub" text="Campus DUT" />
+        <ui:Label class="dash-section-title" text="LƯU LƯỢNG SINH VIÊN THEO GIỜ" />
+        <ui:VisualElement name="dash-hourly-chart" class="dash-hourly-chart" />
+        <ui:VisualElement class="dash-chart-legend">
+          <ui:VisualElement class="dash-legend-item">
+            <ui:VisualElement class="dash-legend-dot dash-legend-dot--peak" />
+            <ui:Label class="dash-legend-text" text="Cao điểm" />
           </ui:VisualElement>
-          <ui:VisualElement class="dash-stat-card">
-            <ui:Label class="dash-stat__label" text="ĐANG SỬ DỤNG" />
-            <ui:Label class="dash-stat__num dash-stat--red" text="47" />
-            <ui:Label class="dash-stat__sub" text="52% tổng số" />
+          <ui:VisualElement class="dash-legend-item">
+            <ui:VisualElement class="dash-legend-dot dash-legend-dot--normal" />
+            <ui:Label class="dash-legend-text" text="Bình thường" />
           </ui:VisualElement>
-          <ui:VisualElement class="dash-stat-card">
-            <ui:Label class="dash-stat__label" text="PHÒNG TRỐNG" />
-            <ui:Label class="dash-stat__num dash-stat--green" text="31" />
-            <ui:Label class="dash-stat__sub" text="34% tổng số" />
-          </ui:VisualElement>
-          <ui:VisualElement class="dash-stat-card">
-            <ui:Label class="dash-stat__label" text="SẮP CÓ LỚP" />
-            <ui:Label class="dash-stat__num dash-stat--amber" text="12" />
-            <ui:Label class="dash-stat__sub" text="trong 30 phút" />
+          <ui:VisualElement class="dash-legend-item">
+            <ui:VisualElement class="dash-legend-dot dash-legend-dot--now" />
+            <ui:Label class="dash-legend-text" text="Hiện tại" />
           </ui:VisualElement>
         </ui:VisualElement>
-
-        <!-- Row 2: Bar chart + Donut -->
-        <ui:VisualElement class="dash-row">
-
-          <!-- Bar chart: Sử dụng theo giờ -->
-          <ui:VisualElement class="dash-chart-card" style="flex-grow: 2;">
-            <ui:Label class="dash-chart__title" text="Tỷ lệ sử dụng theo giờ" />
-            <ui:Label class="dash-chart__sub" text="Hôm nay · Tất cả khu" />
-            <ui:VisualElement class="bar-chart">
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 20px;" />
-                <ui:Label class="bar-label" text="7h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill bar-fill--occupied" style="height: 72px;" />
-                <ui:Label class="bar-label" text="8h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill bar-fill--occupied" style="height: 90px;" />
-                <ui:Label class="bar-label" text="9h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 55px;" />
-                <ui:Label class="bar-label" text="10h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill bar-fill--occupied" style="height: 80px;" />
-                <ui:Label class="bar-label" text="11h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 30px;" />
-                <ui:Label class="bar-label" text="12h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill bar-fill--upcoming" style="height: 60px;" />
-                <ui:Label class="bar-label" text="13h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill bar-fill--upcoming" style="height: 85px;" />
-                <ui:Label class="bar-label" text="14h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 40px;" />
-                <ui:Label class="bar-label" text="15h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 25px;" />
-                <ui:Label class="bar-label" text="16h" />
-              </ui:VisualElement>
-              <ui:VisualElement class="bar-col">
-                <ui:VisualElement class="bar-fill" style="height: 15px;" />
-                <ui:Label class="bar-label" text="17h" />
-              </ui:VisualElement>
-            </ui:VisualElement>
-          </ui:VisualElement>
-
-          <!-- Donut: Phân bổ chức năng -->
-          <ui:VisualElement class="dash-chart-card" style="flex-grow: 1;">
-            <ui:Label class="dash-chart__title" text="Phân bổ chức năng" />
-            <ui:Label class="dash-chart__sub" text="Theo số tòa nhà" />
-            <ui:VisualElement class="donut-container">
-              <ui:VisualElement class="donut-visual">
-                <ui:Label class="donut-pct" text="52%" />
-              </ui:VisualElement>
-              <ui:VisualElement class="donut-legend">
-                <ui:VisualElement class="donut-legend-row">
-                  <ui:VisualElement class="donut-legend-dot" style="background-color: rgb(46,143,232);" />
-                  <ui:Label class="donut-legend-text" text="Giảng đường" />
-                  <ui:Label class="donut-legend-val" text="38" />
-                </ui:VisualElement>
-                <ui:VisualElement class="donut-legend-row">
-                  <ui:VisualElement class="donut-legend-dot" style="background-color: rgb(245,158,11);" />
-                  <ui:Label class="donut-legend-text" text="Thí nghiệm" />
-                  <ui:Label class="donut-legend-val" text="28" />
-                </ui:VisualElement>
-                <ui:VisualElement class="donut-legend-row">
-                  <ui:VisualElement class="donut-legend-dot" style="background-color: rgb(168,85,247);" />
-                  <ui:Label class="donut-legend-text" text="Hành chính" />
-                  <ui:Label class="donut-legend-val" text="14" />
-                </ui:VisualElement>
-                <ui:VisualElement class="donut-legend-row">
-                  <ui:VisualElement class="donut-legend-dot" style="background-color: rgb(107,114,128);" />
-                  <ui:Label class="donut-legend-text" text="Tiện ích" />
-                  <ui:Label class="donut-legend-val" text="10" />
-                </ui:VisualElement>
-              </ui:VisualElement>
-            </ui:VisualElement>
-          </ui:VisualElement>
-
-        </ui:VisualElement>
-
-        <!-- Row 3: Top tòa nhà -->
-        <ui:VisualElement class="dash-chart-card" style="margin-right: 0px;">
-          <ui:Label class="dash-chart__title" text="Top tòa nhà sử dụng nhiều nhất" />
-          <ui:Label class="dash-chart__sub" text="Hôm nay · Theo số giờ có lớp" />
-          <ui:VisualElement class="top-list-row">
-            <ui:Label class="top-list__rank" text="1" />
-            <ui:Label class="top-list__name" text="Tòa nhà A" />
-            <ui:VisualElement class="top-list__bar-track">
-              <ui:VisualElement class="top-list__bar-fill" style="width: 92%;" />
-            </ui:VisualElement>
-            <ui:Label class="top-list__pct" text="92%" />
-          </ui:VisualElement>
-          <ui:VisualElement class="top-list-row">
-            <ui:Label class="top-list__rank" text="2" />
-            <ui:Label class="top-list__name" text="PTN Điện" />
-            <ui:VisualElement class="top-list__bar-track">
-              <ui:VisualElement class="top-list__bar-fill" style="width: 78%;" />
-            </ui:VisualElement>
-            <ui:Label class="top-list__pct" text="78%" />
-          </ui:VisualElement>
-          <ui:VisualElement class="top-list-row">
-            <ui:Label class="top-list__rank" text="3" />
-            <ui:Label class="top-list__name" text="Tòa nhà F" />
-            <ui:VisualElement class="top-list__bar-track">
-              <ui:VisualElement class="top-list__bar-fill" style="width: 75%;" />
-            </ui:VisualElement>
-            <ui:Label class="top-list__pct" text="75%" />
-          </ui:VisualElement>
-          <ui:VisualElement class="top-list-row">
-            <ui:Label class="top-list__rank" text="4" />
-            <ui:Label class="top-list__name" text="Khu TN Cơ khí" />
-            <ui:VisualElement class="top-list__bar-track">
-              <ui:VisualElement class="top-list__bar-fill" style="width: 68%;" />
-            </ui:VisualElement>
-            <ui:Label class="top-list__pct" text="68%" />
-          </ui:VisualElement>
-          <ui:VisualElement class="top-list-row">
-            <ui:Label class="top-list__rank" text="5" />
-            <ui:Label class="top-list__name" text="Tòa nhà C" />
-            <ui:VisualElement class="top-list__bar-track">
-              <ui:VisualElement class="top-list__bar-fill" style="width: 61%;" />
-            </ui:VisualElement>
-            <ui:Label class="top-list__pct" text="61%" />
-          </ui:VisualElement>
-        </ui:VisualElement>
-
+        <ui:VisualElement name="dash-alert-section" class="dash-alert-section" />
       </ui:VisualElement>
 
-      <!-- RIGHT: Heatmap -->
-      <ui:VisualElement class="dash-right">
-        <ui:Label class="heatmap-title" text="Heatmap sử dụng" />
-        <ui:Label class="heatmap-sub" text="Tòa nhà × Giờ trong ngày" />
-        <ui:VisualElement class="heatmap-grid">
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu A" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu C" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu F" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="PTN I" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu K" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu G" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-4" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-          </ui:VisualElement>
-          <ui:VisualElement class="heatmap-row">
-            <ui:Label class="heatmap-row-label" text="Khu D" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-3" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-2" />
-            <ui:VisualElement class="heatmap-cell hm-1" />
-            <ui:VisualElement class="heatmap-cell hm-0" />
-          </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement class="heatmap-x-labels">
-          <ui:Label class="heatmap-x-label" text="7h" />
-          <ui:Label class="heatmap-x-label" text="9h" />
-          <ui:Label class="heatmap-x-label" text="11h" />
-          <ui:Label class="heatmap-x-label" text="13h" />
-          <ui:Label class="heatmap-x-label" text="15h" />
-          <ui:Label class="heatmap-x-label" text="17h" />
-          <ui:Label class="heatmap-x-label" text="19h" />
-          <ui:Label class="heatmap-x-label" text="21h" />
+      <!-- RIGHT: Heatmap zone × 14h -->
+      <ui:VisualElement class="dash-right-panel">
+        <ui:Label class="dash-section-title" text="HEATMAP HOẠT ĐỘNG" />
+        <ui:VisualElement name="dash-heatmap" class="dash-heatmap" />
+        <ui:VisualElement name="dash-hm-xlabels" class="dash-heatmap-xlabels" />
+        <ui:VisualElement class="dash-divider" />
+        <ui:Label class="dash-section-title" text="Mức độ sử dụng" style="margin-bottom: 4px;" />
+        <ui:VisualElement class="dash-hm-scale">
+          <ui:VisualElement class="dash-hm-scale-cell hm-0" />
+          <ui:VisualElement class="dash-hm-scale-cell hm-1" />
+          <ui:VisualElement class="dash-hm-scale-cell hm-2" />
+          <ui:VisualElement class="dash-hm-scale-cell hm-3" />
+          <ui:VisualElement class="dash-hm-scale-cell hm-4" />
         </ui:VisualElement>
       </ui:VisualElement>
 
